@@ -1,0 +1,38 @@
+\documentclass[../background_research.tex]{subfiles}
+\begin{document}
+\subsubsection{Standard Deviation}
+
+The estimate of the daily volatility is calculated as the square root of the \textit{variance-rate} $\sigma^2_{n}$ on day $n$:
+\begin{equation}
+    \label{eqn:variance}
+    \sigma^2_{n} = \frac{1}{m-1}\sum_{i=1}^m{(u_{n-i}-\bar{u})^2}
+\end{equation}
+Simply, daily volatility is the standard deviation of daily returns.
+In equation~\ref{eqn:variance}, we take $\frac{1}{m-1}$ so that our estimate is unbiased.
+However, for simplicity we take $\frac{1}{m}$ instead.
+Now we can simplify our equation and estimate the squared volatility as:
+\begin{equation}
+    \label{eqn:varianceSimplified}
+    \sigma^2_n={\frac{1}{m}}\sum_{i=1}^mu^2_{n-i}
+\end{equation}
+In this equation, we give equal weight to each value of $u^2_{n-i}$.
+This type of model is fine if volatility is constant; this is an acceptable assumption for small periods of time.
+But we cannot make this assumption for long periods of time.
+If we compare last year's volatility estimate to today's, we can expect it would be different.
+
+When estimating volatility, it makes sense to assume instead that more recent price changes are more relevant than those in the past.
+But on the other hand, we naturally want to include in our calculations as many observations as possible to produce the best estimate.
+This is a trade-off that needs to be reconciled.
+
+Let us consider, as Hull suggests, the following example - a simple weighted model:
+\begin{equation}
+    \label{eqn:weightedmodel}
+    \sigma^2 _n = \sum_{i=1}^m{\alpha_i}u^2_{n-i}
+\end{equation}
+Here, we give observations from $i$ days ago a weight of $\alpha_i$.
+An observation $j$ days ago is more recent than an observation $i$ days ago, (i.e. $i > j$).
+We then assign to each observation a weight such that $a_i < a_j$.
+More recent observations $u_j$ have higher weighting than older observations $u_i$.
+Note that the $\alpha$'s must be positive and sum to unity such that $\sum_{i=1}^m{\alpha_i} = 1$.
+
+\end{document}

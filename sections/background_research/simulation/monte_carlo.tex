@@ -1,0 +1,130 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Monte Carlo}
+\label{section:montecarlo}
+
+Our treatment of the Monte Carlo simulation follows Hull \cite{Hull:2012} Chapter 20, page 446 onwards and Chapter 21 page 488.
+
+The Monte Carlo method shares many similarities with the Historical method.
+For instance, the way our final VaR estimate is chosen is the same.
+The main difference is how we generate tomorrow's stock prices.
+
+Let us suppose that our portfolio consists of a number of stocks.
+For each of these stocks, we once again look at historical data to calculate a vector of price changes $\Delta S_i$.
+Our main assumption now is that these vectors take the multivariate Gaussian distribution, the parameters of which we will estimate from $\Delta S_i$.
+Once again, we assume this vector has a mean of zero.
+As such, we only need find the variance-covariance matrix $\Sigma$.
+					\begin{equation}
+						\label{eqn:multivariategaussian}
+						\Delta S_{i}\sim\phi(0,\Sigma)
+					\end{equation}
+Once we know $\Sigma$, the Monte Carlo method will allow us to randomly sample from whatever distribution we have.
+We start with the stochastic process from equation~\ref{eqn:stochastic2}, which we simplify by removing the deterministic part $\mu dt$ (since $\mu = 0$):
+					\begin{equation}
+						\label{eqn:montecarlo}
+						S_i^{t+1} = S_i^t + S_i^t L\epsilon_i\sqrt{dt}
+					\end{equation}	
+where $L$ is the Cholesky decomposition of $\Sigma$, analogous to the square root of $\Sigma$. 
+Our portfolio consists of multiple stocks so to find $\Sigma$ we take the covariance between each stock and build a matrix.
+
+\paragraph{Cholesky Decomposition}
+
+In our treatment of the Cholesky Decomposition, we refer to Chapter 2, page 96 of Press~\cite{Press:1992}.
+In the univariate case, $L$ would be equivalent to taking the square root of $\sigma^2$. 
+But there is no direct way of taking the square root of a matrix.
+Our approach here is to take the Cholesky decomposition to approximate $\sqrt{\Sigma}$.
+This gives us a lower triangular matrix $L$, in which all elements above the diagonal are zero.
+The product of $L$ with its transpose is $\Sigma$.
+					\begin{equation}
+						\label{eqn:cholesky}
+						\Sigma = LL'
+					\end{equation}
+					
+Consider the following matrix $A$, which is symmetric and positive definite as an example:
+					\begin{equation}
+						\label{eqn:matricescholesky}
+					A = 
+					\begin{bmatrix}
+						a_{11} & a_{12} & a_{13}\\
+						a_{21} & a_{22} & a_{23}\\
+						a_{31} & a_{32} & a_{33}
+					\end{bmatrix}
+					\end{equation}
+We need to find $L$ such that $A=LL^T$. 
+Writing this out looks like:
+					\begin{multline}
+					\begin{bmatrix}
+						a_{11} & a_{12} & a_{13}\\
+						a_{21} & a_{22} & a_{23}\\
+						a_{31} & a_{32} & a_{33}
+					\end{bmatrix}
+					=
+					\begin{bmatrix}
+						l_{11} & 0 & 0\\
+						l_{21} & l_{22} & 0\\
+						l_{31} & l_{32} & l_{33}
+					\end{bmatrix}
+					\begin{bmatrix}
+						l_{11} & l_{21} & l_{31}\\
+						0 & l_{22} & l_{32}\\
+						0 & 0 & l_{33}
+					\end{bmatrix}
+					\\=
+					\begin{bmatrix}
+						l_{11}^2 & l_{21}l_{11} & l_{31}l_{11}\\
+						l_{21}l_{11} & l_{21}^2 + l_{22}^2 & l_{31}l_{21}+l_{32}l_{22}\\
+						l_{31}l_{11} &  l_{31}l_{21}+l_{32}l_{22} & l_{31}^2+l_{32}^2+l_{33}^2
+					\end{bmatrix}
+					\end{multline}
+Then we obtain the following formulas for $L$:
+above the diagonal:
+					\begin{equation}
+						\label{eqn:diagonalL}
+						L_{ii} = \Bigg( a_{ii}-\sum_{k=1}^{i-1}L_{ik}^2\Bigg)^{1/2}
+					\end{equation}
+and below the diagonal:					
+					\begin{equation}
+						\label{eqn:belowdiagonalL}
+						L_{ji}=\frac{1}{L_{ii}}\Bigg(a_{ij}-\sum_{k=1}^{i-1}L_{ik}L_{jk}\Bigg)
+					\end{equation}				
+where $j = i+ 1, i+2,...,N$
+\paragraph{Correlating IID random variables}
+In equation~\ref{eqn:montecarlo}, $\epsilon$ is vector of independent and identically distributed (IID) random variables sampled from the standard Gaussian.	
+The product of $L$ and $\epsilon_i$ gives us correlated random variables. 
+This process iterates through $N$ number of steps of finite but small size $\sqrt{dt}$.
+At each step, our stock price increments by $ S_i ^t L \epsilon_i\sqrt{dt}$, which takes the distribution of our historical changes.
+For predicting tomorrow's stock price, it is conventional to choose $\sqrt{dt} = 1/N$ where $N=24$, with each step represents an hour.
+
+The end result is a random walk, at the end of which is a prediction for tomorrow's stock price.
+Repeating this process many times allows us to build a large, probabilistic distribution of tomorrow's stock prices.
+We subtract from today's stock price to compute $\Delta S_i$ for all prices in our new distribution.
+Just as in the Historical method, we revalue our portfolio at all $\Delta S_i$ to get $\Delta\Pi$.
+We then sort this vector in descending order and with a time horizon $\Delta t$ and confidence level $c = 99\%$ cut-off, we take our value for VaR as $\Delta\Pi_{99\%}\sqrt{\Delta t}$.
+The algorithm for the Monte Carlo method is shown on page~\pageref{alg:montecarlo}.
+					\begin{algorithm}
+						\caption{Monte Carlo method}
+						\begin{algorithmic}[1]
+						\Procedure{Monte Carlo}{}
+							\label{alg:montecarlo}							
+							\State Value today's $\Pi$ from $S_i^0$
+							\State Calculate vector $\Delta S_i$ from historical data
+							\State Compute $\text{cov}_{ij}$ between $\Delta S_i$ and $\Delta S_j$
+							\State Populate $\Sigma$
+							\State Compute $L$ via Cholesky Decomposition
+							\For {10000 random walks}
+							\State $t\gets 0$
+							\While {t $<$ N}
+								\State Sample $\epsilon_i$ from the standard Gaussian					
+								\State $S_i^{t+1} = S_i^t + S_i ^t L \epsilon_i\sqrt{dt}$
+								\State t++
+							\EndWhile
+							\Return $S_i^N$
+							\State Value tomorrow's $\Pi$ from $S_i^N$
+							\EndFor		
+							\State Compute all increments $\Delta\Pi$	
+							\State Sort samples in descending order
+							\State VaR $\gets \Delta\Pi_{99\%}\sqrt{\Delta t}$				
+						\EndProcedure
+						\end{algorithmic}
+					\end{algorithm}
+\end{document}

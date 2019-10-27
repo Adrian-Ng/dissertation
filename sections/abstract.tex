@@ -1,0 +1,26 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\begin{abstract}
+    Value at Risk (VaR) is an estimate which describes, in a single figure, the risk associated with our portfolio of investments.
+    This dissertation attempts to demonstrate the implementation of various measures of VaR using Java.
+    We discuss the theory of the \text{Analytical}, \text{Monte Carlo} and \text{Historical} approaches and detail the differences between these approaches.
+    Some may take probabilistic assumptions and/or sample from simulated distributions.
+    In all cases, we take the parameters of our approaches from real-world historical market data.
+
+    We also look at the various approaches to estimating daily variance and volatility.
+    These are the \textit{Equal-Weighed} (EW), the \textit{Exponentially Weighted Moving Average} (EWMA), the \textit{Generalised Autoregressive Conditional Heteroskedastic} (GARCH(1,1)) approaches.
+    In the case of GARCH(1,1), we demonstrate parameter estimation via maximum likelihood estimation using the Levenberg-Marquardt algorithm.
+    For EWMA, we take the parameter used by J.P. Morgan's RiskMetrics.
+
+    We compare these measures against the real life performance in the stock market via back testing and stress testing.
+    In stress testing, we use real-world data taken from a period of \textit{stressed} market conditions, starting from 1st January 2007.
+    Our experiments will show that some measures, such as EWMA, perform well.
+    Whereas other measures, like EW, do not.
+    We also experiment with different portfolio configurations involving a number of stocks and hedging with put options.
+    We show that we can reduce our exposure to risk by diversifying our portfolio.
+
+    We source our data from Google Finance and demonstrate in our Java implementation the approach to acquisition of stock and options data.
+    Additionally, we demonstrate an object-oriented approach to computing our statistics.
+
+\end{abstract}
+\end{document}

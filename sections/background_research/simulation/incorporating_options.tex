@@ -1,0 +1,51 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Incorporating Options}
+
+With Historical and Monte Carlo simulation, we are able to simulate a distribution of tomorrow's stock prices.
+We are able further simulate the incorporation of options in our portfolio if we modify our simulation. 
+By using an option pricing method such as Black-Scholes, we use each of tomorrow's stock prices to return an estimate for tomorrow's option price, which we incorporate into our revaluation of the portfolio.
+
+The Black Scholes formulas for pricing call and put options are as follows~\cite{Hull:2012}:
+
+					\begin{equation}
+						\label{eqn:callbs}
+						c(S,t) = SN(d_1)-Xe^{r(T-t)}N(d_2)
+					\end{equation}					
+					\begin{equation}
+						\label{eqn:putbs}
+						p(S,t) = Xe^{-r(T)}N(-d_2)-SN(-d_1)
+					\end{equation}
+where:\begin{conditions}
+$S$ & tomorrow's stock price\\
+$X$ & strike price\\
+$r$  & interest rate\\
+$T$ & days to maturity\\
+$N(...)$ & cumulative normal distribution function\\
+\end{conditions}
+$d_1$ and $d_2$ are defined as:
+					\begin{equation}
+						\begin{split}
+							\label{eqn:bsd1d2}
+							d_1 = \frac{ln{S/X}+(r+\sigma^2/2)(T)}{\sigma\sqrt{T}}\\d_2 = d_1 -  \sigma\sqrt{T}
+						\end{split}
+					\end{equation}
+					
+By further diversifying our portfolio with options, we will be able to mitigate risk.
+The algorithm for Historical or Monte Carlo simulation with a portfolio incorporating options is as follows:			
+					\begin{algorithm}[H]
+						\caption{Simulation with Options}
+						\begin{algorithmic}[1]
+						\Procedure{Simulation with Options}{}
+							\label{alg:simoptions}							
+							\State Value today's $\Pi$ from $S_i^0$ and today's option price\\
+							\State Simulate distribution of tomorrow's stock prices using Historical or Monte Carlo method
+							\State Estimate tomorrow's option price using Black Scholes
+							\State Value tomorrow's $\Pi$ from $S_i^N$ and tomorrow's option price		
+							\State Compute all increments $\Delta\Pi$	
+							\State Sort samples in descending order
+							\State VaR $\gets \Delta\Pi_{99\%}\sqrt{\Delta t}$				
+						\EndProcedure
+						\end{algorithmic}
+					\end{algorithm}		
+\end{document}

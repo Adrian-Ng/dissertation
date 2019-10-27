@@ -1,0 +1,42 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Historical}
+\label{section:historical}
+
+Our treatment of this section follows Hull \cite{Hull:2012} Chapter 21, page 474 onwards.
+
+The key feature here is that we don't make probabilistic assumptions (no more Gaussian distributions). 
+Instead, we have historical data for our market variables. 
+Our view is that what happened in the past is a guide to what will happen in the future.
+That is, tomorrow's price change will be sampled from the distribution of price changes in our historical data.
+
+First we must value our portfolio using today's stock prices.
+Let us iterate through our historical data and, for each stock, calculate a vector of price changes $\Delta S_i$.
+We do this via the same method as shown in equation~\ref{eqn:returns} and once again assume the mean to be zero.
+If our data consists of 1001 days of history, then we get 1000 days of price changes.
+
+For each of these price changes $\Delta S_i$, we compute the difference between the current value of our portfolio and the future value our portfolio to build a sample of changes $\Delta\Pi$.
+We then sort $\Delta\Pi$ in order of largest to smallest, positive to negative.
+If, for example, our confidence level is $c=99\%$.
+Our estimate of VaR occurs at the cut-off point in $\Delta\Pi$ at 99\%.
+99\% of 1000 samples is 990, so we take $\Delta\Pi_{990}\sqrt{\Delta t}$, where $\Delta t$ is the time horizon.
+
+The algorithm for the Historical method is shown on page~\pageref{alg:historical}.
+					\begin{algorithm}
+						\caption{Historical method}
+						\begin{algorithmic}[1]
+						\Procedure{Historical}{}
+							\label{alg:historical}							
+							\State Value $\Pi^{today}$ from today's $S_i$
+							\ForAll {assets $1 \leq i \leq n$}
+							\State Calculate vector $\Delta S_i$ from historical data
+							\State Apply all $\Delta S_i$ to $S_i$
+							\EndFor
+							\State Revalue for $\Pi^{tomorrow}$
+							\State $\Delta\Pi = \Pi^{tomorrow}-\Pi^{today}$
+							\State Sort $\Delta\Pi$ in descending order
+							\State VaR $\gets \Delta\Pi_{99\%}\sqrt{\Delta t}$
+						\EndProcedure
+						\end{algorithmic}
+					\end{algorithm}	
+\end{document}

@@ -1,0 +1,53 @@
+\documentclass[../background_research.tex]{subfiles}
+\begin{document}
+
+\subsubsection{Exponentially Weighted Moving Average}
+We see a modification of this weighting in the Exponentially Weighted Moving Average (EWMA) model.
+In this case, the weights decrease exponentially for older observations.
+In other words, as $i$ increases, we decrease the weight on each time step by some constant proportion $\lambda$.
+That is, $\alpha_{i+1} = \lambda{\alpha_i}$ where the inverse \textit{rate-of-decay}, $\lambda$, is a constant between 0 and 1.
+If $\lambda=0$, most of our influence comes from $u^2_{n-1}$.
+If $\lambda$ is large, this means we won't discriminate as much against observations in the past.
+As such, $\lambda$ allows us to control the influence of the most recent data.
+
+As we iterate through our data, we maintain an estimate of $\sigma^2$ via:
+\begin{equation}
+    \label{eqn:ewma1}
+    \sigma^2_n = \lambda{\sigma^2_{n-1}} + (1-\lambda){u^2_{n-1}}
+\end{equation}
+This is a recursive formula wherein the estimate for the volatility $\sigma_n$ at the end of day $n$ is calculated from the end of the previous day's estimate of volatility $\sigma_{n-1}$ (which, in turn, was calculated from $\sigma_{n-2}$ and so on).
+We can expand our formula, via substitution into:
+\begin{equation}
+    \label{eqn:ewma2}
+    \sigma^2_n=(1-\lambda)\sum_{i=1}^m\lambda^{i-1}u^2_{n-i}+\lambda^m\sigma^2_{n-m}
+\end{equation}
+Note that the observation $u^2_{n-i}$, which is $i$ days old has the weight $\lambda^{i-1}u^2_{n-i}$.
+Consider the most recent estimate for $\sigma^2_n$:
+\begin{equation}
+    \label{eqn:ewma3}
+    \sigma^2_n = \lambda{\sigma^2_{n-1}} + (1 - \lambda){u^2_{n-1}}
+\end{equation}
+
+And consider the previous estimate:
+\begin{equation}
+    \label{eqn:ewma4}
+    \sigma^2_{n-1}=\lambda{\sigma^2_{n-2}+(1-\lambda)u^2_{n-2}}
+\end{equation}
+
+Substituting equation~\ref{eqn:ewma4} into equation~\ref{eqn:ewma3} gives us:
+\begin{equation}
+    \label{eqn:ewma5}
+    \sigma^2_n = \lambda^2{\sigma^2_{n-2}} + \lambda(1-\lambda){u^2_{n-2}} + (1-\lambda){u^2_{n-1}}
+\end{equation}
+As such, $\sigma^2_n$ depends on past data.
+You can see in equation~\ref{eqn:ewma5} that the coefficient of $u^2_{n-2}$ is $(1-\lambda)\lambda$; similar to what we had in equation~\ref{eqn:ewma2}.
+And because $\lambda < 1$, we can see that as $i$ increases, the weight assigned to observations $i$ days in the past decreases at the exponential rate, hence the name.
+\begin{equation}
+    \label{eqn:ewma6}
+    \lim_{i \to m} (1-\lambda)\lambda^{i-1} \rightarrow 0
+\end{equation}
+
+$\lambda$ can be found via maximum likelihood estimates.
+In practice, J.P. Morgan uses EWMA with $\lambda = 0.94$ in their RiskMetrics platform.
+
+\end{document}

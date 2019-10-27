@@ -1,0 +1,26 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\section{Background Research}
+\label{section:background}
+
+\subsection{Estimating Variance and Volatility}
+
+In this section our treatment follows Hull \cite{Hull:2012} chapter 22, page 498 onwards.
+
+Suppose we have a vector of stock prices ${S_i}$.
+Each element in this vector represents a daily reading of stock prices over some fixed interval $\tau$.
+This is our historical data.
+We assume it takes a normal distribution.
+
+In order to calculate daily volatilities from this data, we must iterate through this vector and calculate a vector of percentage changes (=returns).
+Hull \cite{Hull:2012} defines this via the following equation:
+\begin{equation}
+    \label{eqn:returns}
+    {u_i} = \frac{{S_i}-{S_{i-1}}}{S_{i-1}}
+\end{equation}
+This is the percentage change ${u_i}$ between the end of day ${i-1}$ and the end of day ${i}$.
+In calculating the percentage change this way, we can assume the mean of ${u_i}$ given by $\bar{u}={\frac{1}{m}\sum_{i=1}^m{u_{n-i}}}$, is approximately zero such that we simply assume it is zero.
+
+
+
+\end{document}

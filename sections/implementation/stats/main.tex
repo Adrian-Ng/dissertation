@@ -1,0 +1,336 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsection{Stats.java}
+\label{section:stats}
+The \lstinline|Stats.java| class contains a number of methods that perform the necessary statistical calculations for all our VaR measures.
+This class is not intended to be used as an instance variable like \lstinline|Parameteres.java|, \lstinline|Results.java| or \lstinline|optionsData.java|.
+Whereas these classes have \textit{Setters} for writing data, the methods in \lstinline|Stats.java| are essentially just functions - give it some data and it will return a result.
+
+It does, however, contain some instance variables:
+\lstinputlisting[firstnumber=10,firstline=10,lastline=15]{"./assets/Stats.java"}
+Accompanying these are a number of constructors in which these instance variables get initialized.
+The constructor that we use dictates the type of method we can call.
+Now, the methods in \lstinline|Stats.java| are not consistent on what data types they require.
+Some require just a \lstinline|double[]|. 
+Others require a \lstinline|double[][]| or a pair of \lstinline|double[]|s.
+Either way, these methods are reliant upon the instance variables for their input variables.
+As such, we need a variety of constructors to ensure that the right instance variables for our method are used.
+
+\subsubsection{List of Methods}
+
+The following is a list of public methods in \lstinline|Stats.java|. 
+\begin{center}
+\begin{tabular}{||c | c | c ||} 
+\hline
+Name & Constructor & Returns \\ [0.5ex] 
+\hline\hline
+\lstinline|getMean()| & \lstinline|double[]| & \lstinline|double|\\ 
+\hline
+\lstinline|getVariance(int measure)| & \lstinline|double[], double[]| & \lstinline|double| \\
+\hline
+\lstinline|getEWVariance()| & \lstinline|double[], double[]| & \lstinline|double| \\
+\hline
+\lstinline|getEWMAVariance()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getGARCH11Variance()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getVolatility(int measure)| & \lstinline|double[]| & \lstinline|double|\\
+\hline
+\lstinline|getEWVolatility()| & \lstinline|double[]| & \lstinline|double|\\
+\hline
+\lstinline|getEWMAVolatility()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getGARCH11Volatility()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getCorrelationMatrix(int measure)| & \lstinline|double[]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getCovarianceMatrix()| & \lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getCholeskyDecomposition()| & \lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getPercentageChanges()| &\lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getAbsoluteChanges()| & \lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|printMatrixToCSV()|* &\lstinline|double[][]| & \lstinline|void|\\
+\hline
+\lstinline|printVectorToCSV()|* & \lstinline|double[]| & \lstinline|void|\\[1ex] 
+\hline
+\end{tabular}
+\end{center}
+(*) While these methods do not perform statistical calculations, they do provide us with an easy way of printing data to \lstinline|csv|.
+This is desirable if we want to analyse the distribution of our stock price changes produced from Monte Carlo simulation or look at the 1000 VaR estimates produced in Backtesting.
+To implement these methods, we used information submitted by Tataje~\cite{Tataje:2013} and Pasini~\cite{Pasini:2016} on Stack Overflow on how to output data to \lstinline|csv| using \lstinline|BufferedWriter| and \lstinline|StringBuilder|.
+
+\subsubsection{getMean()}
+
+One of our main statistical assumptions is that, for a given vector of price changes $u_i$, its mean $\bar{u} = 0$.
+Despite this, it is still useful to include a method that will return the mean of our array of price changes as a sanity check.
+Indeed, this is how \lstinline|getMean()| is used in the class \lstinline|PortfolioInfo.java|, where we print a break-down of our portfolio.
+\lstinputlisting[firstnumber=33,firstline=33,lastline=36]{"./assets/Stats.java"}
+In our implementation of this method, we simply iterate through each element in \lstinline|double[] singleVector| and sum their values.
+Then we return the average of this sum.
+
+\subsubsection{getEWVariance()}
+This method returns an equal-weighted estimation of daily variance.
+It is our Java implementation of equation~\ref{eqn:covariancexy}, which describes the calculation of the equal-weighted covariance between two market variables.
+We implement this equation (and not the one that describes variance) out of convenience.
+We are able to use it for estimating \textit{both} variance and covariance.
+This is because this method takes two \lstinline|double[]| variables as inputs.
+In computing the variance, both inputs must represent the same market variable.
+That is, the covariance of a market variable is simply the variance.
+When computing covariance the two inputs should represent different market variables. 
+\lstinputlisting[firstnumber=39,firstline=39,lastline=42]{"./assets/Stats.java"}
+We simply iterate through each element in \lstinline|double[] xVector| and \lstinline|double[] yVector| simultaneously and sum their product of their values.
+Then we return the average of this sum.
+
+\subsubsection{getEWMAVariance()}
+
+This method follows equation~\ref{eqn:covarianceEWMA} which is the EWMA estimate of daily-covariance. 
+The reasoning here for implementing covariance and not simply variance is the same as in \lstinline|getVariance()|.
+\begin{lstlisting}[firstnumber = 45]
+        double lambda = 0.94;
+        double EWMA = xVector[numRow -1] * yVector[numRow -1];	
+\end{lstlisting}
+
+Here, we use J.P. Morgan's RiskMetrics estimation of lambda $\lambda = 0.94$.
+The computation of EWMA is recursive and iterative so we must define some initial estimate for variance to begin with.
+We use the product of the two earliest data points.
+We then iterate through the rest of the data, going forwards through time.
+At each iteration, we update our EWMA estimate.
+\begin{lstlisting}[firstnumber = 47,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	for (int i = 1; i < numRow; i++)
+            EWMA = lambda * EWMA @\newline@+ (1-lambda) * xVector[numRow -1 - i] * yVector[numRow -1 - i];
+\end{lstlisting}
+At the end of the loop, we return \lstinline|EWMA|.
+
+\subsubsection{getGARCH11Variance()}
+
+This is our implementation of the GARCH(1,1) estimate of daily-variance.
+Just as in the previous two methods for estimating daily-variance, we take the covariance approach and follow equation~\ref{eqn:covarianceGARCH}.
+GARCH(1,1) requires the estimation of three parameters, \lstinline|double omega, alpha, beta|.
+These are found using the private method \lstinline|LevenbergMarquardt(double[] uSquaredArray)|, where \lstinline|uSquaredArray| is simply an array containing the product of the instance variables \lstinline|double[] xVector| and \lstinline|yVector|.
+\begin{lstlisting}[firstnumber = 60,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for (int i = 1; i < uSquared.length;i++)
+            sigmaSquared = omega @\newline@+ (alpha*uSquared[i]) + (beta*sigmaSquared);
+\end{lstlisting}            
+Once these parameters are known, then the process of estimating the variance is similar to steps taken in \lstinline|getEWMAVariance()|.
+We simply iterate through each observation, going forwards through time.
+At each step, we update our estimation of the variance.
+At the end of the loop, we return this estimate.
+
+\paragraph{LevenbergMarquardt()}
+
+The Levenberg-Marquardt algorithm is a hybrid of gradient descent and Newtonian method. 
+We use it to maximise the log-likelihood function from equation~\ref{eqn:maxlikelihood}.
+This log-likelihood is computed using the private method \lstinline|likelihood()|.
+
+In order to estimate the three parameters for GARCH(1,1), we must define some initial estimates for omega, alpha and beta.
+\begin{lstlisting}[firstnumber = 176]
+	parameters[0] = 0.000001346;	//omega
+	parameters[1] = 0.08339			//alpha
+	parameters[2] = 0.9101;			//beta
+\end{lstlisting}
+These initial estimates were lifted out of Chapter 22, page 506 in Hull~\cite{Hull:2012}.
+Choosing the right initial parameters is important: The algorithm is capable of making rapid descents, but it can get stuck easily in local valleys, instead of the global valley.
+
+We also need to specify some small fudge factor parameter. 
+To begin with, we specify \lstinline|private double lambda = 0.001;|
+This parameter governs the size of our steps.
+The algorithm adjusts this parameter accordingly depending on whether each step managed to increase the maximum likelihood estimate.
+Because a number of methods need to be able to write to \lstinline|lambda|, it is an instance variable.
+
+First we calculate return an estimation of the log-likelihood using the \lstinline|likelihood(uSquaredArray,parameters);| method.
+Then we being a while loop which, on each iteration, maximises the log-likelihood until it can only produce insignificant increases and exits the loop.
+
+In this loop, we produce some trial parameters using the method \lstinline|getTrialParameters(perameters,uSquaredArray)|.
+Using these trial parameters, we compute a trial estimate of the maximum likelihood estimate.
+If we have increased the likelihood, the trial parameters are accepted and we decrease the fudge factor by 10.
+Otherwise, we ignore the trial parameters and revert to the previous parameters and increase the fudge factor by 10.
+
+\paragraph{likelihood()}
+
+This \lstinline|likelihood()| method is an implementation of the log-likelihood seen in equation~\ref{eqn:maxlikelihood}.
+But first, we must generate an entire history of variance estimates by iterating through our data and computing the variance using a process similar to that found in the \lstinline|getGARCH11Variance()| method.
+\begin{lstlisting}[firstnumber =205,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for(int i = 1; i < variance.length; i++)
+            variance[i] = omega + (alpha * uSquaredArray[i]) @\newline@+ (variance[i-1]* beta);
+\end{lstlisting}
+That is, we implement the formula from equation~\ref{eqn:covarianceGARCH}, this time populating each result into an array \lstinline|double[] variance| as we iterate through the data.
+\begin{lstlisting}[firstnumber =205,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for(int i = 0; i < variance.length; i++)
+            likelihood += -Math.log(variance[i]) @\newline@- (uSquaredArray[i+1]/variance[i]);
+\end{lstlisting}
+Lastly, to compute the maximum likelihood estimate, we iterate through each of our variance estimates, summing the log-likelihood as we go.
+At the end of the loop, we return \lstinline|likelihood|.
+
+\paragraph{getTrialParameters()}
+
+\lstinline|getTrialParameters()| takes \lstinline|double[] parameters| and \lstinline|double[] uSquaredArray| as inputs.
+These being our current parameter estimates and the squared price changes respectively.
+First we take a history of our variance estimates \lstinline|double[] variance| just as line \lstinline|likelihood()|.
+Then, iterating through \lstinline|variance|, we compute the variables \lstinline|double dOmega, dAlpha, dBeta|.
+\iffalse
+\begin{lstlisting}[firstnumber = 231,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	dOmega += ((-1/variance[i]) + (uSquaredArray[i]/Math.pow(variance[i],2)));@\newline@
+	dAlpha += (-uSquaredArray[i]/variance[i])@\newline@+ (Math.pow(uSquaredArray[i],2)/Math.pow(variance[i],2));@\newline@
+	dBeta 	+= (-variance[i-1]/variance[i])@\newline@+ ((uSquaredArray[i]*variance[i-1])/Math.pow(variance[i],2));
+\end{lstlisting}
+\fi
+The computation of these variables are implementations of the partial differential equations seen in equations~\ref{eqn:partialomega},~\ref{eqn:partialalpha}, and~\ref{eqn:partialbeta}.
+
+We then initialize the following array from equation~\ref{eqn:betavector}: 
+\begin{lstlisting}[firstnumber = 236]
+	double[] vectorBeta = {-0.5*dOmega, 0.5*dAlpha, -0.5*dBeta};
+\end{lstlisting}
+
+Then we enter a while-loop.
+Firstly, we initialize the curvature matrix from equation~\ref{eqn:alphamatrix}:
+\begin{lstlisting}[firstnumber=241,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+double[][] curvatureMatrix = {
+{0.5*dOmega*dOmega * (1 + lambda), 0.5*dOmega*dAlpha, 0.5*dOmega*dBeta},@\newline@
+{0.5*dAlpha*dOmega, 0.5*dAlpha*dAlpha * (1 + lambda), 0.5*dAlpha*dBeta},@\newline@
+{0.5*dBeta*dOmega, 0.5*dBeta*dAlpha, 0.5*dBeta*dBeta * (1 + lambda)}};
+\end{lstlisting}
+
+Mathematically, we have a matrix and a vector, which is represented just as in equation~\ref{eqn:linear}.
+In order to solve the simultaneous equations, we use the \lstinline|linear| package from the library \lstinline|org.apache.commons.math3|~\cite{Apache:Math3}.
+The solution to the simultaneous equations is a an increment to the trial parameters.
+If this increment is too small, then we break out of the while loop.
+Otherwise, we increment the trial parameters.
+The trial parameters are subject to a few conditions: 
+				\begin{equation}
+					\label{eqn:parameterconditions}
+					a_j = \begin{cases}
+						0 \leq \omega \leq \infty\\
+						0 \leq \alpha \leq 1\\
+						0 \leq \beta \leq 1-\alpha\\
+						\alpha + \beta < 1
+						\end{cases}
+				\end{equation}
+where $a_j$ is the parameter vector.
+If the trial parameters break these conditions, we increase the fudge factor by a factor of ten and move on to the next iteration of the loop.
+Otherwise, we will have found new trial parameters.
+So we break the loop and return \lstinline|trialParameters|.
+
+\subsubsection{Volatility methods}
+
+In the univariate case, each volatility estimate is the square root of the estimate of daily variance.
+We have three methods that return volatility estimates: \lstinline|getEWVolatility()|, \lstinline|getEWMAVolatility()|, and \lstinline|getGARCH11Volatility()|.
+Implementing each of these methods is simple.
+\begin{lstlisting}[firstnumber = 65,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+    public double getEWVolatility(){return Math.sqrt(getEWVariance());}
+    public double getEWMAVolatility(){return Math.sqrt(getEWMAVariance());}
+    public double getGARCH11Volatility(){return Math.sqrt(getGARCH11Variance());}
+\end{lstlisting}
+We call a method for the corresponding estimate of daily-variance and take the square root.
+
+\subsubsection{Encapsulating Variance and Volatility}
+
+Because we have so many methods for computing variance and volatility, it can be difficult to write code that isn't cumbersome.
+For instance, suppose we have a single array of price changes.
+We want to use a loop to compute all three variance estimates, but we cannot.
+We have to instead avoid a loop and write repetitive code that calls each method one by one.
+
+To avoid this, we have implemented some helper methods.
+These take an input variable \lstinline|int measures|, in which certain values are encoded to correspond to another method.
+The integers 1, 2, 3 encode to \textit{Equal-Weighted}, \textit{EWMA},  and  \textit{GARCH(1,1)} respectively.
+
+We have two methods in this case: \lstinline|getVariance(int measure)| and \lstinline|getVolatility(int measure)|.
+For example, the following code will return an Equal-Weighted variance estimate of our price changes.
+\begin{center}
+	\lstinline|double variance = new Stats(priceChanges, priceChanges).getVariance(1);|
+\end{center}
+The next example will return the GARCH(1,1) volatility estimate:
+\begin{center}
+	\lstinline|double volatility = new Stats(priceChanges, pricechanges).getVolatility(3);|
+\end{center}	
+This is a particularly useful feature when it comes to our implementation of \lstinline|getCorrelationMatrix()|.
+
+\subsubsection{getCorrelationMatrix()}
+
+ We are able to construct correlation matrices using any of our variance and volatility methods.
+ Thanks to the encapsulation discussed above, we are able write quite general code that still allows us to switch between the types of estimates very easily.
+ First we declare a two-dimension square matrix. 
+ \begin{center}
+ 	\lstinline|double[][] matrix = new double[numCol][numCol];|
+ \end{center}
+ It has a length equal to the number of stock variables in our portfolio.
+ Using a nested loop, we iterate through each element and compute the correlation as in equation~\ref{eqn:correlation}.
+ 
+That is, at each element we compute the covariance between the $i$th and $j$th variable using the method \lstinline|getVariance(measure)|, where \lstinline|measure| is an integer that simply specifies what sort of estimate we want (EW, EMWA or GARCH(1,1).
+At the same time, with the \lstinline|getVolatility(measure)| method, we compute the volatility estimate for the $i$th variable and the same for the $j$th variable.
+\begin{lstlisting}[firstnumber = 94]
+	matrix[i][j] = covXY / (sigmaX * sigmaY);
+\end{lstlisting}
+Then we take the covariance estimate and divide it by the product of our two volatility estimates to compute the correlation estimate for that element in the matrix.
+Once we populate the entire matrix, we return \lstinline|matrix|.
+
+
+\subsubsection{getCovarianceMatrix()}
+
+Building a variance-covariance matrix is similar to building the correlation matrix - especially since covariance and correlation are so mathematically intertwined.
+As before, we declare a two dimensional matrix
+\begin{lstlisting}[firstnumber = 101]
+ 	double[][] covarianceMatrix = new double[numCol][numCol];
+\end{lstlisting}
+ We iterate through each element in the same way using a nested loop and populate the value of each element by calling the \lstinline|getVariance(measure)| method.
+ \begin{lstlisting}[firstnumber=104,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+ covarianceMatrix[i][j] @\newline@= new Stats(multiVector[i], multiVector[j]).getVariance(measure);
+ \end{lstlisting}
+ When the entire matrix is populated, we return \lstinline|covarianceMatrix|.
+
+
+\subsubsection{getCholeskyDecomposition()}
+
+This method is an implementation of the Cholesky Decomposition, following equations~\ref{eqn:diagonalL} and~\ref{eqn:belowdiagonalL}.
+In our Monte Carlo simulation, we are trying to find $L$ such that $\Sigma = LL^T$ where $\Sigma$ is our variance-covariance matrix.
+
+This method does not take a covariance matrix as an input. 
+That is because in \lstinline|MonteCarlo.java|, we do not need one and as such never create one.
+Therefore, we first build a covariance matrix using the method \lstinline|getCovarianceMatrix(measure)|.
+Then we initialize a matrix for $L$.
+\begin{lstlisting}[firstnumber=108,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+		double[][] covarianceMatrix = getCovarianceMatrix(measure);
+		double[][] cholesky@\newline@ = new double[covarianceMatrix.length][covarianceMatrix.length];
+\end{lstlisting}
+
+Then we enter a nested loop and iterate through each of the remaining elements.
+At every element, we do the following:
+\begin{lstlisting}[firstnumber=113,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+                double sum = 0;
+                for (int k = 0; k < j; k++)
+                    sum += cholesky[i][k] * cholesky[j][k];
+                if(i==j)
+                    cholesky[i][j] = Math.sqrt(covarianceMatrix[i][j] - sum);
+                else
+                    cholesky[i][j] = (covarianceMatrix[i][j] - sum) / cholesky[j][j];
+\end{lstlisting}
+That is, we compute \lstinline|sum| as $\sum_{k=1}^{i-1}L_{ik}L_{jk}$.
+Then, if we are on a diagonal, we subtract \lstinline|sum| from the value on the same element on the covariance matrix and take the square root.
+If we are \textit{under} the diagonal, we don't take the square root but divide by the diagonal element at $i$.
+When we exit the loop, we return the matrix \lstinline|cholesky|.
+
+\subsubsection{getPercentageChanges()}
+
+Underpinning all our calculations when estimating VaR is our historical data.
+We need to compute the daily percentage changes, as seen in equation~\ref{eqn:returns} when using any VaR measure.
+The method \lstinline|getPercentageChanges()| will take a two-dimensional array of stock prices and iterate first by asset and then by day.
+Or, in other words, we use a nested loop in which we iterate through every element in a column and then move onto the next column.
+At each element we compute:
+\begin{lstlisting}[firstnumber=127,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	priceDiff[i][j] = ((multiVector[i][j]- multiVector[i][j+1])@\newline@/ multiVector[i][j+1]);
+\end{lstlisting}
+The end result is the two-dimensional array \lstinline|double[][] priceDiff| that will be one row shorter than our array of stock data.
+If we call \lstinline|getMean()| on \lstinline|priceDiff|, we will return a result very close to zero.
+
+%\subsubsection{getAbsoluteChanges()}
+
+%In Backtesting, we need to be able to compare our VaR estimates with the real losses that our portfolio would have incurred at the time.
+%We use \lstinline|getAbsoluteChanges()| which is a simple modification of \lstinline|getPercentageChanges|.
+%Here, our calculation at every element is:
+%\begin{lstlisting}[firstnumber=134,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+%priceDiff[i][j] = multiVector[i][j]- multiVector[i][j+1];
+%\end{lstlisting}
+
+\end{document}

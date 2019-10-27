@@ -1,0 +1,40 @@
+\documentclass[../background_research.tex]{subfiles}
+\begin{document}
+\subsubsection{Estimating Covariance}
+
+Now, we have discussed how to estimate the daily volatilities $\sigma_x$ and $\sigma_y$.
+If we calculate the vector of price changes $x_i$ for stock $X$ and the vector of price changes $y_i$ for stock $Y$ using the same method in equation~\ref{eqn:returns} then we can assume $\bar{x}=\bar{y} = 0$.
+As such, we can then use equation~\ref{eqn:varianceSimplified} to estimate the \textit{variance-rate}.
+\begin{equation}
+    \label{eqn:variancexy}
+    \sigma^2_{x,n}={\frac{1}{m}}\sum_{i=1}^mx^2_{n-i},\quad \sigma^2_{y,n}={\frac{1}{m}}\sum_{i=1}^my^2_{n-i}
+\end{equation}
+Our estimate for the covariance on day $n$ between $X$ and $Y$ is calculated as:
+\begin{equation}
+    \label{eqn:covariancexy}
+    \text{cov}_n={\frac{1}{m}}\sum_{i=1}^mx_{n-i}y_{n-i}
+\end{equation}
+As you can see this is similar to our estimate of $\sigma^2$.
+
+Likewise, if we are attempting the EWMA approach, then our covariance estimate for day $n$ takes a similar form to our estimation of the variance-rate in equation~\ref{eqn:ewma1}:
+\begin{equation}
+    \label{eqn:covarianceEWMA}
+    \text{cov}_n= \lambda{\text{cov}_{n-1}} + (1-\lambda)x_{n-1}y_{n-1}
+\end{equation}
+Again, we see a recursive approach for our covariance estimation.
+If we were to perform another substitution analysis, we would also see that the weights given to the observations decline at the exponential rate the further we look into the past.
+
+For GARCH(1,1), covariance is estimated as:
+\begin{equation}
+    \label{eqn:covarianceGARCH}
+    \text{cov}_n=\omega+\alpha{x_{n-1}}y_{n-1}+\beta\text{cov}_{n-1}
+\end{equation}
+where our parameters $\omega, \alpha$, and $\beta$ can be found by maximising the following:
+\begin{equation}
+    \label{eqn:maxlikelihood2}
+    \sum_{i=1}^m\Bigg[-\ln({\text{cov}_i}) - \frac{x_i{y_i}}{\text{cov}_i}\Bigg]
+\end{equation}
+
+Once we have our covariance estimates, we are able to produce a \textit{variance-covariance} matrix.
+
+\end{document}

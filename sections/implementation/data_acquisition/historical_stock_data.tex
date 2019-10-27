@@ -1,0 +1,40 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Historical Stock Data}
+
+Historical stock data comes in \lstinline|csv| format.
+To download from the Google Finance API, we must append some parameters to the URL \lstinline|http://www.google.com/finance/historical|.
+\begin{center}
+ \begin{tabular}{||c c c||} 
+ \hline
+ Description & Parameter & Example Argument \\ [0.5ex] 
+ \hline\hline
+ Stock Symbol & q & =GOOG\\ 
+ \hline
+ Date from which to start collecting data & startdate & =Aug+23\%2C+2016 \\
+ \hline
+ Download \lstinline|csv| format & output & =csv \\ [1ex] 
+ \hline
+\end{tabular}
+\end{center}
+To do so, we concatenate a parameter and its argument and separate each pair with an ampersand.
+The resulting string is known as a \textit{query string}
+Then we prefix this string with a question mark, which dermarcates the query string section in a URL~\cite{Wiki:QueryString}.
+
+The full URL would look something like:
+\begin{center}
+\lstinline|http://www.google.com/finance/historical?q=GOOG&startdate=Aug+23%2C+2016&output=csv|
+\end{center}
+
+
+The \lstinline|csv| file takes the following schema:
+\begin{center}
+ \begin{tabular}{||c | c | c | c | c | c||} 
+ \hline
+ Date & Open & High & Low & Close & Volume \\ [0.5ex] 
+ \hline
+\end{tabular}
+\end{center}
+Since we are only concerned with the price change between the stock price at the end of the day and the end of the next day (see equation~\ref{eqn:returns}), we need only the \lstinline|Close| field.
+
+\end{document}

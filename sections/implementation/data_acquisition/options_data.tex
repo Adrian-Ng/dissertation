@@ -1,0 +1,23 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Options Data}
+
+Google Finance provides the option chains in a complicated \lstinline|JSON| format.
+These are downloaded from a slightly different URL: \lstinline|http://www.google.com/finance/option_chain|.
+And this time, we only need two parameters in our query string.
+\begin{center}
+ \begin{tabular}{||c c c||} 
+ \hline
+ Description & Parameter & Example Argument \\ [0.5ex] 
+ \hline\hline
+ Stock Symbol & q & =GOOG\\ 
+ \hline
+ Download \lstinline|JSON| format & output & =json \\ [1ex] 
+ \hline
+\end{tabular}
+\end{center}
+With the same treatment as before, the final URL will look something like:
+\begin{center}
+\lstinline|http://www.google.com/finance/option_chain?q=GOOG&output=json|
+\end{center}
+\end{document}

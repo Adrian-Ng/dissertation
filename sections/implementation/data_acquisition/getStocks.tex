@@ -1,0 +1,97 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+subsubsection{getStocks.java}
+
+We have a class called \lstinline|getStocks.java|.
+It takes two inputs: \lstinline|String[] symbols| and \lstinline|int intYears|.
+The former input is an array that contains our desired stock symbols, of which there could be any number.
+The latter input dictates the number of years in the past from which we access our data.
+
+We first need to convert \lstinline|int intYears| into something that the API can understand.
+The aptly-named method \lstinline|CalculateYearDiffReturnDAteAsString(int intYears)| subtracts the desired number of years from today's date and outputs it in the API's required format \lstinline|MMM+dd%2Cyyyy|
+, where \%2C is a comma in Unicode.
+
+Because our VaR estimates could involve portfolios that contain multiple stocks, we need to be able to download multiple \lstinline|csv| files.
+To do so, we must loop through each element in \lstinline|String[] symbols|.
+In each loop we construct our URL, then download the \lstinline|csv| from the URL and lastly grab all the stock prices in the \lstinline|Close| field.
+
+\paragraph{getCSVfromURL()}
+
+We use this method to download the \lstinline|csv| data. 
+Its only input is our URL string.
+This method follows steps outlined by Oracle~\cite{Oracle:2015}a submission by user BalusC on Stack Overflow~\cite{BalusC:2010a}.
+Here, we use the constructor \lstinline|URL(urlstr)| and its method \lstinline|openStream()| to initialise an \lstinline|InputStream|.
+\begin{lstlisting}[firstnumber = 16]
+InputStream is = new URL(urlstr).openStream();
+\end{lstlisting}
+We parse the \lstinline|InputStream| using \lstinline|BufferedReader csv|, which gets returned to the main class.
+\begin{lstlisting}[firstnumber = 18]
+BufferedReader csv = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+\end{lstlisting}
+
+\paragraph{getStocksFromCSV()}
+
+This method iterates through each line of \lstinline|BufferedReader csv|.
+Each line is simply a comma separated string. 
+So on each iteration, we use the \lstinline|split()| method to populate an array where each element contains a value from the corresponding attribute in the \lstinline|csv|.
+\lstinputlisting[firstnumber=27,firstline=27,lastline=27]{"C:/Users/Adrian/OneDrive - Royal Holloway University of London/IdeaProjects/CS5821 VaR/src/VaR/getStocks.java"}
+Then we take the value in the 4th index, which is the \lstinline|Close| attribute, and add it to \lstinline|ArrayList<Double> alData|.
+\lstinputlisting[firstnumber=35,firstline=35,lastline=35]{"C:/Users/Adrian/OneDrive - Royal Holloway University of London/IdeaProjects/CS5821 VaR/src/VaR/getStocks.java"}
+
+We use an \lstinline|ArrayList| because we don't know how much data we will have.
+If we request one year's worth of data, then, depending today's day of the week, we could return either 252 or 253 rows of data.
+But we won't know how many rows we have until we have iterated through the entire set.
+As such, we take advantage of the flexibility of \lstinline|ArrayList| which, unlike an array, does not need to know its dimensions at point of construction.
+
+We return the \lstinline|ArrayList| to the main method where we have declared \lstinline|HashMap<String, ArrayList<Double>> mapStocks|.
+Using the stock symbol as the key, the \lstinline|ArrayList| is added to the \lstinline|HashMap|, where it sits while we move onto the next stock symbol to download.
+A \lstinline|HashMap| might seem like a complication but it does in fact simplify things.
+
+Firstly, we have multiple ArrayLists - one for each stock Symbol.
+If we were dealing with having multiple primitive arrays, we would simply store them all in a single two-dimensional array.
+Unfortunately there is nothing analogous to a two-dimensional \lstinline|ArrayList|.
+Secondly, the \lstinline|HashMap| allows us to store ArrayLists of varying size.
+That is because even though we may use the same date in the past to download our data, the number of stock prices in this time interval for AAPL may still differ from TSLA.
+
+Once everything is downloaded, we declare a two-dimensional array:
+\begin{lstlisting}[firstnumber = 78]
+double[][] stockPrices = new double[numSym][numTuples];
+\end{lstlisting}
+where \lstinline|numSym| is simply the number of symbols we are dealing with and \lstinline|numTuples| is size of the smallest \lstinline|ArrayList| (we need our historical data to be of equal lengths).
+Then, using a nested for-loop, we populate the array with the contents of the \lstinline|HashMap|:
+\begin{lstlisting}[firstnumber = 82]
+ArrayList<Double> arrayListStockPrices = mapStocks.get(symbols[i]);
+                stockPrices[i][j] = arrayListStockPrices.get(j);
+\end{lstlisting}                
+
+Ultimately, this two-dimensional array stores all our stock prices and gets passed to all the other classes for VaR estimation.
+We use a two-dimensional array because accessing each element is very easy.
+This makes it perform calculations that require looking at interactions between stocks - for instance when computing covariance.
+
+So the general procedure is as follows:
+					\begin{algorithm}[H]
+						\caption{Class: getStocks.java}
+						\begin{algorithmic}[1]
+						\Function{getStocks.java}{\lstinline|String[] symbols|,\lstinline|int intYears|}
+							\label{class:getStocks}							
+							\State Convert \lstinline|int intYears| into \lstinline|MMM+dd%2Cyyyy|
+							\ForAll {\lstinline|String[] symbols|}
+							\State Concatenate URL string
+							\State Download \lstinline|csv|
+							\State Populate \lstinline|ArrayList| from \lstinline|csv|
+							\State Add \lstinline|Arraylist| to \lstinline|HashMap|
+							\EndFor
+							\State \lstinline|double[][] stockPrices| $\gets$ \lstinline|HashMap|
+							\State \Return \lstinline|double[][] stockPrices|
+						\EndFunction
+						\end{algorithmic}
+					\end{algorithm}
+
+Originally, we wanted to be able to use days instead of years because as Hull~\cite{Hull:2012} points out on page 474, it leads to 500 price changes.
+Unfortunately it became apparent that trying to query a given number of days of data using the API is problematic.
+Financial data is not published everyday which means that if we were to instruct Java to subtract 501 days from today's date, we would not return a date range than covers 501 days worth of data.
+Compensating for weekends is not a complete solution; bank holidays and public holidays are the issue.
+These vary from year to year and country to country. 
+Tracking their occurrences was simply too complicated and too much of a low priority so this idea was abandoned.
+
+\end{document}

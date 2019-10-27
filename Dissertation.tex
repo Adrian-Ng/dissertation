@@ -1,0 +1,95 @@
+\documentclass[11pt]{article} % do not change this line
+\input{BigDataStyle.tex}      % do not change this line
+
+\usepackage{amsmath,amsfonts,amssymb,amsthm,latexsym,graphicx,cite,listings,algorithm, algorithmicx,csquotes,pgfplots,array,lstautogobble,multirow,wrapfig,caption,subcaption}
+\usepackage[noend]{algpseudocode}
+\usepackage[toc,page]{appendix}
+\usepackage{subfiles}
+\usetikzlibrary{pgfplots.groupplots}
+\lstset{ % General setup for the package
+	language=Java,
+	basicstyle=\fontsize{9}{11}\sffamily,
+	numbers=left,
+ 	numberstyle=\tiny,
+	tabsize=4,
+	columns=fixed,
+	showstringspaces=false,
+	showtabs=false,
+	keepspaces,
+	breaklines=true,
+	%postbreak=\postbreak,
+	autogobble=true
+}
+
+\emergencystretch=5mm
+\tolerance=400
+\allowdisplaybreaks[4]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{problem}[theorem]{Problem}
+
+\theoremstyle{definition}
+\newtheorem*{remark}{Remark}
+
+\title{Implementation of Value at Risk Measures in Java}
+\author{Adrian Ng}
+
+\newcommand{\Programme}{Data Science and Analytics}
+
+
+\pgfmathdeclarefunction{gauss}{2}{%
+  \pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+
+\begin{document}
+
+\maketitle
+
+\declaration
+\subfile{./sections/abstract.tex}
+\subfile{./sections/introduction.tex}
+
+\subfile{./sections/background_research/main.tex}
+
+\subfile{./sections/background_research/estimators/standard_deviation.tex}
+\subfile{./sections/background_research/estimators/ewma.tex}
+\subfile{./sections/background_research/estimators/garch.tex}
+\subfile{./sections/background_research/estimators/covariance.tex}
+
+\subfile{./sections/background_research/analytical_approach/main.tex}
+\subfile{./sections/background_research/analytical_approach/joint_positions.tex}
+\subfile{./sections/background_research/analytical_approach/linear_model.tex}
+\subfile{./sections/background_research/analytical_approach/single_asset.tex}
+
+\subfile{./sections/background_research/simulation/main.tex}
+\subfile{./sections/background_research/simulation/historical.tex}
+\subfile{./sections/background_research/simulation/monte_carlo.tex}
+\subfile{./sections/background_research/simulation/incorporating_options.tex}
+
+\subfile{./sections/background_research/backtesting/main.tex}
+\subfile{./sections/background_research/backtesting/standard.tex}
+\subfile{./sections/background_research/backtesting/kupiec.tex}
+\subfile{./sections/background_research/backtesting/stress_testing.tex}
+
+\subfile{./sections/implementation/main.tex}
+
+\subfile{./sections/implementation/data_acquisition/main.tex}
+\subfile{./sections/implementation/data_acquisition/historical_stock_data.tex}
+%\subfile{./sections/implementation/data_acquisition/getStocks.tex}
+\subfile{./sections/implementation/data_acquisition/options_data.tex}
+\subfile{./sections/implementation/data_acquisition/getOptions.tex}
+
+\subfile{./sections/implementation/stats/main.tex}
+\subfile{./sections/implementation/stats/constructors.tex}
+
+\bibliographystyle{plain}
+\bibliography{./bibliography}
+\end{document}

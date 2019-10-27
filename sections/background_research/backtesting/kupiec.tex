@@ -1,0 +1,37 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Kupiec's PF Coverage Test}
+\label{section:coveragekupiec}
+Kupiec's PF (Point of Failure) coverage test offers no advantage over the Standard coverage test. 
+But nonetheless, gives us an alternative for comparison.
+
+Once again we find a non-rejection interval, the width of which is governed by significance level $\epsilon$.
+Now we find the interval $[v_1,v_2]$ such that:
+			\begin{equation}
+				\label{eqn:kupiecconstraint}
+				\mathbb{P}(V<v_1)\leq\epsilon/2\text{ and }\mathbb{P}(v_2 <V)\leq\epsilon/2
+			\end{equation}
+We can test $\mathit{H_0}$ at any $\epsilon$.
+
+First we calculate the $\epsilon$ quantile of the $\chi^2$ distribution.
+Then we compute the following log-likelihood ratio:
+			\begin{equation}
+				\label{eqn:kupieclikelihood}
+				\text{log}L(n) = 2\log\Bigg(\bigg(\frac{\alpha+1-n}{c(\alpha+1)}\bigg)^{\alpha+1-n}\bigg(\frac{n}{(1-c)(\alpha+1)}\bigg)^n\Bigg)
+			\end{equation}
+where:				
+\begin{conditions}	
+$n$ & non-negative integer\\
+\alpha & number of VaR moments\\
+$c$ & confidence level\\
+\end{conditions}
+In theory, we set $\text{log}L(n)$ equal to our quantile and solve for $n$, which has two solutions.
+In practice, we need $n$ to be pair of integers that define our non-rejection interval.
+
+Instead, we find $n$ programmatically.
+We initialize $n\gets0$ and increment until $\text{log}L(n)>= \text{percentile}$. 
+We compare $m\gets n$ and $m\gets n-1$ and take whichever value of $m$ that minimizes the distance from $\text{log}L(n)$ to our percentile.
+We take this value of $m$ as our lower interval.
+We keep incrementing $n$ until $\text{log}L(n)<= \text{percentile}$ and do the same as before to find our upper interval.
+
+\end{document}

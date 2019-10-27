@@ -1,0 +1,26 @@
+\documentclass[../analytical_approach.tex]{subfiles}
+\begin{document}
+
+\subsubsection{Linear Model}
+
+The joint portfolio scenario, in which we have two assets, can be generalised by the following formula, in which we have $M$ number of assets:
+					\begin{equation}
+						\label{eqn:linear}
+						\mathit{VaR} = -\alpha(1-c)(\Delta t)^{1/2}\sqrt{\sum_{j=1}^M\sum_{i=1}^M\Pi_i\Pi_j\sigma_i\sigma_j\rho_{ij}} 
+					\end{equation}
+where $a(1-c)$ is the inverse cumulative distribution function of the Gaussian distribution, which gives us the percentile $x_{(1-c)\%}$ and $\delta t$ is the time horizon.
+Again, we multiply these parameters by the total standard deviation, which is the square root of a linear combination of the product of volatilities and correlations.
+
+Notice that $\rho_{ij}$ is actually a matrix in which the $i$th row and $j$th column is the correlation between the $i$th and $j$th assets.
+At the diagonal, where $i = j$, the correlation equals unity because a variable is always fully correlated with itself.
+Additionally, since $\rho_{ij} = \rho_{ji}$, the correlation matrix is symmetric.
+
+As mentioned earlier, $\sigma_i\sigma_j\rho_{ij} = \text{cov}_{ij}$. So we could even write equation~\ref{eqn:linear} in terms of a variance-covariance matrix $\Sigma$ instead:
+					\begin{equation}
+						\label{eqn:linear2}
+						\mathit{VaR} = -\alpha(1-c)(\Delta t)^{1/2}\sqrt{\sum_{j=1}^M\sum_{i=1}^M\Pi_i\Pi_j\Sigma_{ij}} 
+					\end{equation}
+Each element in this matrix is the product of the correlation of $i$ and $j$, the daily volatility of $i$ and the daily volatility of $j$. 
+The elements at the diagonal are simply the daily volatility squared, which is the daily variance.
+
+\end{document}

@@ -1,0 +1,11 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsection{Data acquisition}
+
+Our first task was to get some historical financial data, preferably in CSV format. An immediate goal was to be able to use an API to access data for a given stock symbol and time-frame from within a Java program.
+We initially looked at \textit{Yahoo Finance} and \textit{Google Finance}, which were understood to each have their own API.
+We found a Java library\cite{FinanceQuotes:2017} that pulls data using the \textit{Yahoo} API. After some testing, it was deemed unsatisfactory for our uses. We decided that it would be necessary to write our own program instead.
+
+After discovering that the \textit{Yahoo Finance} API had been recently shut down~\cite{Nixon:2017}, we found success in accessing historical stock data in \lstinline|csv| format and option chains in \lstinline|JSON| format via the \textit{Google Finance} API.
+
+\end{document}

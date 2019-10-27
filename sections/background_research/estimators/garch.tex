@@ -1,0 +1,93 @@
+\documentclass[../background_research.tex]{subfiles}
+\begin{document}
+\subsubsection{GARCH(1,1)}
+The Generalised Autoregressive Conditional Heteroskedastic (GARCH(1,1)) process is an extension of the model in equation~\ref{eqn:weightedmodel} wherein we assume there is a long-term average variance $V_L$ and give it a weight $\gamma$.
+\begin{equation}
+	\label{eqn:garch}
+	\sigma^2_n=\gamma{V_L}+\alpha{u^2_{n-1}}+\beta\sigma^2_{n-1}
+\end{equation}
+We can replace $\gamma{V_L}$ with $\omega$.
+The most recent squared volatility estimate is governed by the \textit{previous} calculated observation of $u^2$ and the \textit{previous} estimation for squared volatility.
+Hence the (1,1) suffix.
+The prior estimates for squared volatility are calculated recursively via the same model in equation~\ref{eqn:garch}.
+This is similar to the EWMA model, which also gives weight to its observations.
+In fact, EWMA model is actually a particular case of GARCH(1,1) where $\gamma=0$, $\alpha = 1-\lambda$, and $\beta = \lambda$.
+
+Furthermore, GARCH(1,1) is similar to EWMA in that its parameters $\omega, \alpha$ and, $\beta$ are also estimated via maximum likelihood approaches.
+The likelihood function to be maximised is:
+\begin{equation}
+	\label{eqn:maxlikelihood}
+	\chi^2(a)=\sum_{i=1}^m\Bigg[-\ln({v_i}) - \frac{u^2_i}{v_i}\Bigg]
+\end{equation}
+where $v_i = \sigma^2_i$ and $a$ is the vector of parameters to be found.
+Hull suggests using an algorithm such as \textit{Levenberg-Marquardt} (LM) for this.
+Press~\cite{Press:1992} demonstrates LM as a tool to optimize parameters for least squares, in which the merit function $\chi^2$ to be \textit{minimised} is:
+
+\begin{equation}
+	\label{eqn:LSmerit}
+	\chi^2(a) = \sum_{i=1}^N\Bigg[\frac{y_i-y(x_i;a)}{\sigma_i}\Bigg]^2
+\end{equation}
+In least squares, this function is used to measure the quality of fit.
+According to Jansen~\cite{Jansen:2014}, an AR(1) process is a standard regression problem; maximum likelihood estimates are interchangeable with least squares.
+We can therefore use equation~\ref{eqn:maxlikelihood} as our merit function to be maximised in LM.
+We take partial derivatives to find the gradient of $\chi^2$.
+
+\begin{equation}
+	\label{eqn:partialomega}
+	\frac{\partial\chi^2}{\partial\omega}=\sum_{i=1}^m\Bigg[-\frac{1}{\omega+\alpha{u^2_i}+\beta\sigma^2_i}+\frac{u^2}{(\omega+\alpha{u^2_i}+\beta\sigma^2_i)^2}\Bigg]
+\end{equation}
+\begin{equation}
+	\label{eqn:partialalpha}
+	\frac{\partial\chi^2}{\partial\alpha}=\sum_{i=1}^m\Bigg[-\frac{u^2_i}{\omega+\alpha{u^2_i}+\beta\sigma^2_i}+\frac{u^4}{(\omega+\alpha{u^2_i}+\beta\sigma^2_i)^2}\Bigg]
+\end{equation}
+\begin{equation}
+	\label{eqn:partialbeta}
+	\frac{\partial\chi^2}{\partial\beta}=\sum_{i=1}^m\Bigg[-\frac{\sigma^2_i}{\omega+\alpha{u^2_i}+\beta\sigma^2_i}+\frac{u^2\cdot{\sigma^2_i}}{(\omega+\alpha{u^2_i}+\beta\sigma^2_i)^2}\Bigg]
+\end{equation}
+We define the vector $\beta_k$ as:
+\begin{equation}
+	\label{eqn:betavector}
+	\beta_k\equiv -\frac{\partial\chi^2}{\partial{a_k}}
+\end{equation}
+and matrix $\alpha_{kl}$ as:
+\begin{equation}
+	\begin{split}
+		\label{eqn:alphamatrix}
+		\alpha_{jj}\equiv \frac{\partial\chi^2}{\partial{a_j}}	\cdot \frac{\partial\chi^2}{\partial{a_j}}\cdot(1+\lambda)\\
+		\alpha_{jk}\equiv \frac{\partial\chi^2}{\partial{a_j}}	\cdot \frac{\partial\chi^2}{\partial{a_k}}\quad(j\neq{k})
+	\end{split}
+\end{equation}
+where $\lambda$ is some non-dimensional \textit{fudge factor} which is used to control the size of the step.
+Note that $(1+\lambda)$ is multiplied across the diagonal.
+These terms can be written as the set of linear equations which we solve for $\delta{a_l}$:
+\begin{equation}
+	\label{eqn:linear}
+	\sum_{i=1}^M{\alpha_{kl}}\delta{a_l}=\beta_k
+\end{equation}
+$\delta{a_l}$ is an increment of $a$ that, when added to the current approximation, forms the next approximation of the parameters.
+Altogether, the recipe for parameter optimization via the LM algorithm is as follows:
+\begin{algorithm}[H]
+	\caption{Parameter Estimation via Levenberg-Marquardt}
+	\begin{algorithmic}[1]
+		\Procedure{Levenberg-Marquardt}{}
+		\label{alg:lm}
+		\State Compute $\chi^2(a)$
+		\State $\lambda \gets 0.001$
+		\While{$ \delta{a} >  0$}
+		\State Solve $\sum_{i=1}^M{\alpha_{kl}}\delta{a_l}=\beta_k$ for $\delta{\alpha_l}$
+		\If  {$\chi^2(a + \delta{a})  > \chi^2(a)$}
+		\State $\lambda \gets \lambda \times 0.1$.
+		\State $a \gets a + \delta{a}$
+		\Else $\lambda \gets \lambda \times 10$.
+		\EndIf
+		\EndWhile
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+We stop when $\delta{a}<<1$.
+Once optimal parameters have been found, the long-term Variance can be calculated (but by then $\sigma^2_n$ will have already been estimated).
+\begin{equation}
+	\label{eqn:longVariance}
+	V_L=\frac{\omega}{1-\alpha-\beta}
+\end{equation}
+\end{document}

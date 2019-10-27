@@ -1,0 +1,118 @@
+\documentclass[../analytical_approach.tex]{subfiles}
+\begin{document}
+\subsubsection{Single Asset}
+
+We can model the behaviour of the stock price over some time interval $dt$ via the Stochastic equation:
+\begin{equation}
+    \label{eqn:stochastic}
+    \frac{dS}{S}=\mu dt + \sigma dz
+\end{equation}
+where $dz = \epsilon\sqrt{dt}$. Assuming some small (but finite) interval of time $\Delta t$, we can rewrite this as:
+\begin{equation}
+    \label{eqn:stochastic2}
+    \frac{dS}{S}=\mu \Delta t + \sigma \epsilon\sqrt{dt}
+\end{equation}
+where $\epsilon\sim\phi{0,1}$.
+We can simplify this equation by ignoring $\mu \Delta t$, which is relatively small over small time intervals.
+This is because, in practice, the interest rate $\mu$ is much smaller than the volatility $\sigma$.
+Suppose $\mu = 0.1$ and $\sigma = 0.35$ and we consider a day over a yearly interval, so $\Delta t = \frac{1}{252}$, then $\mu \Delta t \approx 0.0004$ and $\sigma \sqrt{\Delta t} \approx 0.022$.
+We see now that the latter dominates the former and at small time intervals $\mu \Delta t$ is small enough to be ignored.
+So simplifying:
+\begin{equation}
+    \label{eqn:stochastic3}
+    \frac{dS}{S}=\sigma \epsilon\sqrt{dt}
+\end{equation}
+As such we can take the approximation of the change of our share price to be Normally distributed:
+\begin{equation}
+    \label{eqn:distributionS}
+    \Delta S\sim\phi(0,S^2\cdot\sigma^2\Delta t)
+\end{equation}
+If our portfolio consists of $k$ shares then the value of the portfolio is $\Pi=kS$.
+Its change in value will therefore be $\Delta \Pi = k \Delta S$.
+Likewise, we multiply the variance of $\Delta S$ by $k^2$ such that the distribution of $\Delta\Pi$ is:
+\begin{equation}
+    \label{eqn:distributionPi}
+    \Delta \Pi\sim\phi(0,k^2S^2\cdot\sigma^2\Delta t)
+\end{equation}
+
+Value at Risk takes two parameters: time horizon and confidence level. Suppose we take the confidence level $c=99\%$.
+This means we are $99\%$ sure that we won't lose more than $V$, our estimate of Value at Risk.
+That is, the change in the value of our portfolio is $\Delta\Pi<-V$.
+Since we want the probability of this event to be $100-c=1\%$ or less, we need to solve this equation:
+\begin{equation}
+    \label{eqn:probabilityV}
+    \mathbb{P}(\Delta\Pi<-V) = 1\%
+\end{equation}
+How, then, do we calculate $V$?
+$\Pi$ is Gaussian with a mean of zero.
+The density of the change in the value of the portfolio looks like:\\\\
+\begin{figure}
+    \centering
+    \caption{Distribution of $\Delta\Pi$}
+    \label{fig:deltapi}
+    \begin{tikzpicture}
+        \begin{axis}[
+                no markers
+                ,	domain=-3:3
+                ,	samples=100
+                ,	axis lines*=left
+                ,	xlabel=$\Delta\Pi$
+                %,	ylabel=$y$
+                %,	every axis y label/.style={at=(current axis.above origin),anchor=south}
+                ,	hide y axis
+                ,	every axis x label/.style={at=(current axis.right of origin),anchor=west}
+                ,	height=5cm, width=12cm
+                ,	xtick={0}
+                , 	ytick=\empty
+                ,	xticklabels={0}
+                ,	enlargelimits=false
+                ,	clip=false
+                ,	axis on top
+                ,	grid = major
+            ]
+            \addplot [fill=orange!20, draw=none, domain=-3:-2.33] {gauss(0,1)} \closedcycle;
+            \addplot [very thick,cyan!50!black] {gauss(0,1)};
+            \draw[dashed] (axis cs:-2.33,0)node [below]{$-V$} -- (axis cs:-2.33,0.05) node [above]{$1\%$};
+        \end{axis}
+    \end{tikzpicture}
+\end{figure}
+We need to find $V$ such that the shaded area is $1\%$.
+Analytically, we look at this problem in terms of standard Gaussian.
+We can define $\Delta\Pi$:
+\begin{equation}
+    \label{eqn:deltapi}
+    \Delta\Pi = \epsilon\Pi\sigma\sqrt{\Delta t}
+\end{equation}
+where $\epsilon$ is the standard Gaussian.
+If we substitute this into equation~\ref{eqn:probabilityV} we get:
+\begin{equation}
+    \mathbb{P}(\epsilon\Pi\sigma\sqrt{\Delta t}<-V)=1\%
+\end{equation}
+Rearranging, we no longer write the question in terms of $\Delta\Pi$ but in terms of the standard Gaussian:
+\begin{equation}
+    \label{eqn:definepercentile}
+    \mathbb{P}\bigg(\epsilon<-\frac{V}{\Pi\sigma\sqrt{\Delta t}}\bigg)=1\%
+\end{equation}
+We define the percentile $x_{1\%}$ so that $\mathbb{P}(\epsilon\leq x_{1\%}) = 1\%$.
+This number can be found by passing our significance level to the Gaussian inverse cumulative distribution function.
+Once we have found this number we can equate it to:
+\begin{equation}
+    \label{eqn:percentile}
+    x_{1\%}=-\frac{V}{\Pi\sigma\sqrt{\Delta t}}
+\end{equation}
+Thus we derive an exact formula for Value at Risk and find $V$:
+\begin{equation}
+    \label{eqn:varsinglestock}
+    V =-x_{1\%}\Pi\sigma\sqrt{\Delta t}
+\end{equation}
+
+Wilmott~\cite{Wilmott:2007} writes it differently:
+\begin{equation}
+    \label{eqn:varsinglestock2}
+    V =-\sigma\Delta{S}({\delta}{t})^{-1/2}\alpha(1-c)
+\end{equation}
+where $\alpha$ is the inverse cumulative distribution function for the standard Gaussian and the Greek letter $\Delta$ represents the number of stocks at price $S$.
+The two equations are equivalent since $\Delta S = \Pi$.
+But in this way we can explicitly see our parameters for VaR: confidence level $c$ and time horizon $\delta t$.
+
+\end{document}

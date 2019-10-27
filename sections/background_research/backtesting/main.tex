@@ -1,0 +1,23 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsection{Backtesting}
+\label{section:backtesting}
+Having discussed a number of methods of estimating VaR, we must ask ourselves whether our measure is any good.
+In backtesting, we test how well our VaR measures would have performed in the past.
+For instance, we go back 1000 days and for each of these days we compute a VaR estimate using data from one year prior to that day.
+Now, Value at Risk takes two parameters: time horizon $\Delta t$ and confidence level $c$.
+Suppose, for instance, $\Delta t = 1$ $c = 99\%$, then we would compare each of our VaR estimates against the actually 1-day loss that occured on that day.
+If the real-life loss exceeds the VaR estimate, then this is a violation.
+
+With a confidence level of $99\%$ and with $\alpha = 1000$ moments, we would expect 50 violations to occur.
+If the number of violations far exceeds 50, then we underestimated VaR.
+Likewise, if the number of violations is far less than this, then we have overestimated VaR.
+But what if we have 51 or 49 violations?
+We need to know what number of violations falls within a certain interval around our confidence level.
+Moreover, we want to be able to \textit{tighten} this interval by being able to adjust our significance level, changing the accuracy of our estimate.
+
+We use two methods provided by Holton~\cite{Holton:2014} known as coverage tests.
+Our implementation of both the Standard and Kupiec coverage tests follow the information on this page: https://www.value-at-risk.net/backtesting-coverage-tests/.
+These are hypothesis tests with the null hypothesis $\mathit{H_0}$ that states that the expected number of violations $c$ is equal to the observed number of violations.
+
+\end{document}

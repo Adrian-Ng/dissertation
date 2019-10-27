@@ -1,0 +1,113 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getOptions.java}
+
+The \lstinline|getOptions.java| class takes just one input: \lstinline|String[] symbols|.
+Here, we mainly use two methods: \lstinline|getJSONfromURL()| and \lstinline|getOptionsfromJSON()|. 
+
+In our \lstinline|main| method we instantiate an array: \lstinline|optionsData[] options|.
+This data type will store our options data.
+The array is as long as the number of stock symbols in \lstinline|symbols|.
+
+We then iterate through  each element of \lstinline|symbols| in a for-loop.
+On each iteration, we concatenate the URL for our \lstinline|JSON| data.
+Then we invoke \lstinline|getJSONfromURL()| using our URL as an input and afterwards invoke \lstinline|getOptionsfromJSON()| using our \lstinline|JSON| data as an input.
+
+\paragraph{getJSONfromURL()}
+
+Here, we use Google's \lstinline|Gson| library~\cite{gson:2017} and follow instructions submitted by user2654569~\cite{user2654569:2014} on Stack Overflow.
+This method downloads the \lstinline|JSON| file as an \lstinline|InputStream|.
+Using \lstinline|JsonParser|, we parse this into a \lstinline|JsonElement|, which we convert and return as a \lstinline|JsonObject|.
+
+\paragraph{getOptionsfromJSON()}
+
+The \lstinline|JsonObject| retains the hierarchical structure of a \lstinline|JSON| file and allows us direct access to objects, arrays and their elements via a key-value-pair mapping.
+However, it is difficult to navigate this data unless you know the keys in advance.
+This is our reasoning for storing these data in \lstinline|optionsData[]|: ease of access.
+
+The first object we are interested in is \lstinline|expiry|:
+\lstinputlisting[firstnumber=2,firstline=2,lastline=6]{./assets/example.json}
+To access the values it contains we must first construct a new \lstinline|JsonObject| using \lstinline|expiry| as the key.
+\begin{lstlisting}[firstnumber = 48]
+JsonObject expiry = json.get("expiry").getAsJsonObject();
+\end{lstlisting}
+Now we must use further keys on this object to access the values for year, month and day-of-month.
+At this point there are no more underlying objects, so we can store these values in Java strings.
+\begin{lstlisting}[firstnumber = 49]
+        String expiryYear = expiry.get("y").toString();
+        String expiryMonth = expiry.get("m").toString();
+        String expiryDayofMonth = expiry.get("d").toString();
+\end{lstlisting}
+These strings give us a date with which we are able to compute the number of days until the option expires.
+We use the method \lstinline|getNumDaystoExpiry()| for this.
+
+The rest of the data are contained in \lstinline|JSON| arrays.
+These arrays contains a number of elements, each of which have differing strike prices and are as such priced accordingly, depending on how far in the money the strike price gets them.
+The structure of a put or call element in the \lstinline|JSON| array looks like:
+\lstinputlisting[firstnumber=8,firstline=8,lastline=11]{./assets/example.json}
+where \lstinline|p| represents the price of the option. 
+
+As before, to get at the values, we must use the necessary keys.
+But doing so gives us the option price and strike price. 
+Since there are so many puts in the array, simply iterate through each element and extract everything.
+In \lstinline|Historic.java| and \lstinline|MonteCarlo.java|, however, we only use the parameters of the first put.
+
+We now initialize \lstinline|optionsData|:
+\begin{lstlisting}[firstnumber = 84]
+        optionsData options  = new optionsData();
+        options.setCallPrices(callPrices);
+        options.setPutPrices(putPrices);
+        options.setStrikePrices(strikePrices);
+        options.setDaystoMaturity(NumDaystoExpiry);
+\end{lstlisting}
+then return the result to \lstinline|main()|. 
+
+\paragraph{getNumDaystoExpiry}
+
+We now parse our the \lstinline|expiry| values from some strings into a Java \lstinline|Date| object.
+We follow instructions submitted by BalusC~\cite{BalusC:2010b} on Stack Overflow.
+First we specify the format of our string: \lstinline|yyyy MM d|.
+Then we parse it.
+\begin{lstlisting}[firstnumber = 34,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+expiryDate = format.parse(expiryYear + " " + expiryMonth + " " + expiryDayofMonth);
+\end{lstlisting}
+Afterwards, we follow instructions submitted by jens108~\cite{jens108:2013} on Stack Overflow that detail how to find the number of days between two dates.
+It is simply a two step process:
+\begin{lstlisting}[firstnumber =40,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+long diff = expiryDate.getTime() - currentDate.getTime();
+        int NumDaystoExpiry = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+\end{lstlisting}
+We then return the result to \lstinline|getOptionsfromJSON|.
+
+To summarise, the general procedure of \lstinline|getOptions.java| is as follows:
+					\begin{algorithm}[H]
+						\caption{Class: getOptions.java}
+						\begin{algorithmic}[1]
+						\Function{getOptions.java}{\lstinline|String[] symbols|}
+							\label{class:getOptions}							
+							\State Declare \lstinline|optionsData[] options|						
+							\ForAll {\lstinline|String[] symbols|}				
+							\State Declare \lstinline|optionsData options|			
+							\State Concatenate URL string
+							\State Download \lstinline|JSON| string
+							\State Parse into \lstinline|JsonObject|
+							\State Extract data
+							\State Set \lstinline|optionsData options|
+							\State \Return \lstinline|optionsData options|
+							\EndFor
+							\State \Return \lstinline|optionsData[] options|
+						\EndFunction
+						\end{algorithmic}
+					\end{algorithm}
+
+\paragraph{Black Scholes Implementation}
+
+\lstinline|optionsData.java| gives us an object that facilitates the access of our options data (of which we have lots).
+The second benefit is that we can define instance methods that use these data to perform certain calculations.
+
+Specifically, we have implemented a private method called \lstinline|getBlackScholesOptionPrices()|. 
+This class makes use of the \lstinline|distribution| package from the \lstinline|org.apache.commons.math3| library~\cite{Apache:Math3}.
+Its purpose is to implement the Black Scholes formulas described in equations~\ref{eqn:callbs},~\ref{eqn:putbs}, and~\ref{eqn:bsd1d2}.
+To invoke this method, we use the public methods \lstinline|getBlackScholesPut()| or \lstinline|getBlackScholesCall()|.
+
+\end{document}

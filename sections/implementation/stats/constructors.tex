@@ -1,0 +1,39 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Constructors}
+\paragraph{\lstinline|double[] singleVector|}
+
+For instance, we have a method called \lstinline|getMean()|.
+It takes a single variable - a \lstinline|double[]| - and returns a \lstinline|double|.
+That is, suppose we have an array representing a single vector of price changes: \lstinline|double[] priceChanges|.
+To calculate the mean, we invoke the desired constructor and call the method as follows:
+\begin{center}
+\lstinline|double mean = new Stats(priceChanges).getMean();|
+\end{center}
+Because we only used a single \lstinline|double[]|, this means the following constructor was used:
+\lstinputlisting[firstnumber=17,firstline=17,lastline=20]{"./assets/Stats.java"}
+ 
+\paragraph{\lstinline|double[] xVector, double[] yVector|}
+
+On the other hand, we might want to compute the covariance between a pair of variables, both \lstinline|double[]|.
+For this, we use a method called \lstinline|getVariance()| which, this time takes, two variables of the type \lstinline|double[]| and returns a \lstinline|double|.
+We compute the variance in the following fashion:
+\begin{center}
+\lstinline|double covariance = new Stats(priceChanges1, priceChanges2).getVariance();|
+\end{center}
+This time the constructor used looks like 
+\lstinputlisting[firstnumber=21,firstline=21,lastline=22]{"./assets/Stats.java"}
+
+\paragraph{\lstinline|double[][] multiVector|}
+
+Let us also consider, for instance, the case when we need to compute the covariance matrix of some multivariate distribution.
+In the case of our multivariate price changes, we would represent such a distribution with a \lstinline|double[][]|.
+We use a method called \lstinline|getCovarianceMatrix()| which is called in the following way:
+\begin{center}
+\lstinline|double[][] covarianceMatrix = new Stats(priceChanges).getCovarianceMatrix();|
+\end{center}
+where \lstinline|priceChanges| is a \lstinline|double[][]|.
+The constructor we use for this looks like:
+\lstinputlisting[firstnumber=26,firstline=26,lastline=30]{"./assets/Stats.java"}
+
+\end{document}

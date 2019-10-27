@@ -1,0 +1,60 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Standard Coverage Test}
+\label{section:coveragestandard}
+Let us formally define what constitutes a violation via the excedence process $I$:
+				\begin{equation}
+					\label{eqn:excedenceprocess}
+					I^t = \begin{cases}
+						0 \text{ if loss } \Pi^{t-1}-\Pi^t \leq VaR\\
+						1 \text{ if loss } \Pi^{t-1}-\Pi^t > VaR\\
+						\end{cases}
+				\end{equation}
+The number of violations observed in the data is then:
+				\begin{equation}
+					\label{eqn:numviolations}
+					v = \sum_{t=0}^\alpha I^t
+				\end{equation}
+we take $v$ as the realization of the random variable $V$ which takes the binomial distribution:
+				\begin{equation}
+					\label{eqn:binomial}
+					V\sim B(\alpha+1,1-c)
+				\end{equation}
+where $\alpha$ is the number of moments of VaR we take in our backtesting.
+
+Suppose we have some significance level $\epsilon$, which controls the precision of our estimation.
+We are able to test $\mathit{H_0}$ at any $\epsilon$.
+To do this, we must determine the interval $[v_1,v_2]$ such that:
+				\begin{equation}
+					\label{eqn:interval}
+					\mathbb{P}(V\notin [v_1,v_2])\leq \epsilon
+				\end{equation}
+is maximized.
+We also want an interval that is \textit{generally} symmetric, i.e.:
+				\begin{equation} 
+					\label{eqn:symmetry}
+					\mathbb{P}(V<v_1)\approx\mathbb{P}(v_2<V)\approx\epsilon/2
+				\end{equation}			
+Subject to these constraints, we optimize the parameter $n$ that maximises equation~\ref{eqn:interval} having defined our interval as either:
+				\begin{equation}
+						\label{eqn:intervaloptimize}
+						\lbrack a + n,b\rbrack\text{ or }\lbrack a, b-n\rbrack
+				\end{equation}
+where:				
+\begin{conditions}	
+$n$ & non-negative integer\\
+$a$ & maximum integer such that $\mathbb{P}(V<a)\leq \epsilon/2$\\
+$b$ & minimum integer such that $\mathbb{P}(b<V)\leq \epsilon/2$\\
+\end{conditions}
+Initially $n\gets0$, so $a$ and $b$ are starting parameters for our interval.
+As we optimize, we increment $n$ until our conditions are met.
+
+The result of this is a non-rejection interval in which $v$ is permissible.
+If, however, $v$ is outside this interval, we must reject our VaR measure at our significance level $\epsilon$.
+
+The confidence level is a measure of how confident we are in our portfoilio.
+The significance level is a measure of how precise we want our estimate to be.
+It dictates the width of our interval.
+Experimentally, we can begin with a significance level that governs a wide non-rejection level and decrease until we start to see rejections.
+
+\end{document}
