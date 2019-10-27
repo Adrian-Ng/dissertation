@@ -34,9 +34,9 @@ BufferedReader csv = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 This method iterates through each line of \lstinline|BufferedReader csv|.
 Each line is simply a comma separated string. 
 So on each iteration, we use the \lstinline|split()| method to populate an array where each element contains a value from the corresponding attribute in the \lstinline|csv|.
-\lstinputlisting[firstnumber=27,firstline=27,lastline=27]{"C:/Users/Adrian/OneDrive - Royal Holloway University of London/IdeaProjects/CS5821 VaR/src/VaR/getStocks.java"}
+\lstinputlisting[firstnumber=27,firstline=27,lastline=27]{"./assets/getStocks.java"}
 Then we take the value in the 4th index, which is the \lstinline|Close| attribute, and add it to \lstinline|ArrayList<Double> alData|.
-\lstinputlisting[firstnumber=35,firstline=35,lastline=35]{"C:/Users/Adrian/OneDrive - Royal Holloway University of London/IdeaProjects/CS5821 VaR/src/VaR/getStocks.java"}
+\lstinputlisting[firstnumber=35,firstline=35,lastline=35]{"./assets/getStocks.java"}
 
 We use an \lstinline|ArrayList| because we don't know how much data we will have.
 If we request one year's worth of data, then, depending today's day of the week, we could return either 252 or 253 rows of data.
