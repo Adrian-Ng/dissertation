@@ -1,0 +1,39 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsection{VaR Measures}
+
+The following section aims to discuss how our VaR measures were implemented in Java.
+We have separated each measure into its own Java classes.
+Below is a list of the VaR measures implemented as Java classes.
+Included are their inputs and the data types they return.
+
+\begin{center}
+\begin{tabular}{||l | l | l ||} 
+\hline
+Class & Input &  Returns \\ [0.5ex] 
+\hline\hline
+\multirow{2}{6em}{\lstinline|Analytical.java|} & \lstinline|Parameters p| & \multirow{2}{12em}{\lstinline|double[]|}\\ 
+&  \lstinline|double[][] stockPrices| & \\
+\hline
+\multirow{4}{6em}{\lstinline|Historic.java|} & \lstinline|Parameters p| & \multirow{4}{12em}{\lstinline|double|}\\
+& \lstinline|double[][] stockPrices| & \\
+& \lstinline|optionsData[] options| & \\
+& \lstinline|int printFlag| & \\
+\hline
+\multirow{4}{6em}{\lstinline|Montecarlo.java|} & \lstinline|Parameters p| & \multirow{4}{12em}{\lstinline|double[]|}\\
+& \lstinline|double[][] stockPrices| & \\
+& \lstinline|optionsData[] options| & \\
+& \lstinline|int printFlag| & \\
+\hline
+\multirow{2}{6em}{\lstinline|BackTest.java|} & \lstinline|Parameters p| & \multirow{2}{12em}{\lstinline|ArrayList<BackTestData>|}\\ 
+&  \lstinline|optionsData[] options| & \\
+\hline
+\end{tabular}
+\end{center}
+where \lstinline|p| is an instance of class \lstinline|Parameters.java| and options is an instance of class \lstinline|optionsData|.
+Similarly, \lstinline|BackTestData| is an instantiation of class \lstinline|BackTestData.java|.
+
+All of these classes rely on methods that were described in Section~\ref{section:stats}, which in turn are implementations of mathematical theory discussed in Section~\ref{section:background}
+As such, we can now move on to describe the implementation of our VaR classes in a broader scope.
+
+\end{document}

@@ -1,0 +1,11 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getMean()}
+
+One of our main statistical assumptions is that, for a given vector of price changes $u_i$, its mean $\bar{u} = 0$.
+Despite this, it is still useful to include a method that will return the mean of our array of price changes as a sanity check.
+Indeed, this is how \lstinline|getMean()| is used in the class \lstinline|PortfolioInfo.java|, where we print a break-down of our portfolio.
+\lstinputlisting[firstnumber=33,firstline=33,lastline=36]{"./assets/Stats.java"}
+In our implementation of this method, we simply iterate through each element in \lstinline|double[] singleVector| and sum their values.
+Then we return the average of this sum.
+\end{document}

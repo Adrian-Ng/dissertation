@@ -1,0 +1,15 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getEWVariance()}
+This method returns an equal-weighted estimation of daily variance.
+It is our Java implementation of equation~\ref{eqn:covariancexy}, which describes the calculation of the equal-weighted covariance between two market variables.
+We implement this equation (and not the one that describes variance) out of convenience.
+We are able to use it for estimating \textit{both} variance and covariance.
+This is because this method takes two \lstinline|double[]| variables as inputs.
+In computing the variance, both inputs must represent the same market variable.
+That is, the covariance of a market variable is simply the variance.
+When computing covariance the two inputs should represent different market variables.
+\lstinputlisting[firstnumber=39,firstline=39,lastline=42]{"./assets/Stats.java"}
+We simply iterate through each element in \lstinline|double[] xVector| and \lstinline|double[] yVector| simultaneously and sum their product of their values.
+Then we return the average of this sum.
+\end{document}

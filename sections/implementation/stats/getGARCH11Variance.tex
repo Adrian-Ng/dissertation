@@ -1,0 +1,111 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getGARCH11Variance()}
+
+This is our implementation of the GARCH(1,1) estimate of daily-variance.
+Just as in the previous two methods for estimating daily-variance, we take the covariance approach and follow equation~\ref{eqn:covarianceGARCH}.
+GARCH(1,1) requires the estimation of three parameters, \lstinline|double omega, alpha, beta|.
+These are found using the private method \lstinline|LevenbergMarquardt(double[] uSquaredArray)|, where \lstinline|uSquaredArray| is simply an array containing the product of the instance variables \lstinline|double[] xVector| and \lstinline|yVector|.
+\begin{lstlisting}[firstnumber = 60,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for (int i = 1; i < uSquared.length;i++)
+            sigmaSquared = omega @\newline@+ (alpha*uSquared[i]) + (beta*sigmaSquared);
+\end{lstlisting}
+Once these parameters are known, then the process of estimating the variance is similar to steps taken in \lstinline|getEWMAVariance()|.
+We simply iterate through each observation, going forwards through time.
+At each step, we update our estimation of the variance.
+At the end of the loop, we return this estimate.
+
+\paragraph{LevenbergMarquardt()}
+
+The Levenberg-Marquardt algorithm is a hybrid of gradient descent and Newtonian method.
+We use it to maximise the log-likelihood function from equation~\ref{eqn:maxlikelihood}.
+This log-likelihood is computed using the private method \lstinline|likelihood()|.
+
+In order to estimate the three parameters for GARCH(1,1), we must define some initial estimates for omega, alpha and beta.
+\begin{lstlisting}[firstnumber = 176]
+	parameters[0] = 0.000001346;	//omega
+	parameters[1] = 0.08339			//alpha
+	parameters[2] = 0.9101;			//beta
+\end{lstlisting}
+These initial estimates were lifted out of Chapter 22, page 506 in Hull~\cite{Hull:2012}.
+Choosing the right initial parameters is important: The algorithm is capable of making rapid descents, but it can get stuck easily in local valleys, instead of the global valley.
+
+We also need to specify some small fudge factor parameter.
+To begin with, we specify \lstinline|private double lambda = 0.001;|
+This parameter governs the size of our steps.
+The algorithm adjusts this parameter accordingly depending on whether each step managed to increase the maximum likelihood estimate.
+Because a number of methods need to be able to write to \lstinline|lambda|, it is an instance variable.
+
+First we calculate return an estimation of the log-likelihood using the \lstinline|likelihood(uSquaredArray,parameters);| method.
+Then we being a while loop which, on each iteration, maximises the log-likelihood until it can only produce insignificant increases and exits the loop.
+
+In this loop, we produce some trial parameters using the method \lstinline|getTrialParameters(perameters,uSquaredArray)|.
+Using these trial parameters, we compute a trial estimate of the maximum likelihood estimate.
+If we have increased the likelihood, the trial parameters are accepted and we decrease the fudge factor by 10.
+Otherwise, we ignore the trial parameters and revert to the previous parameters and increase the fudge factor by 10.
+
+\paragraph{likelihood()}
+
+This \lstinline|likelihood()| method is an implementation of the log-likelihood seen in equation~\ref{eqn:maxlikelihood}.
+But first, we must generate an entire history of variance estimates by iterating through our data and computing the variance using a process similar to that found in the \lstinline|getGARCH11Variance()| method.
+\begin{lstlisting}[firstnumber =205,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for(int i = 1; i < variance.length; i++)
+            variance[i] = omega + (alpha * uSquaredArray[i]) @\newline@+ (variance[i-1]* beta);
+\end{lstlisting}
+That is, we implement the formula from equation~\ref{eqn:covarianceGARCH}, this time populating each result into an array \lstinline|double[] variance| as we iterate through the data.
+\begin{lstlisting}[firstnumber =205,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for(int i = 0; i < variance.length; i++)
+            likelihood += -Math.log(variance[i]) @\newline@- (uSquaredArray[i+1]/variance[i]);
+\end{lstlisting}
+Lastly, to compute the maximum likelihood estimate, we iterate through each of our variance estimates, summing the log-likelihood as we go.
+At the end of the loop, we return \lstinline|likelihood|.
+
+\paragraph{getTrialParameters()}
+
+\lstinline|getTrialParameters()| takes \lstinline|double[] parameters| and \lstinline|double[] uSquaredArray| as inputs.
+These being our current parameter estimates and the squared price changes respectively.
+First we take a history of our variance estimates \lstinline|double[] variance| just as line \lstinline|likelihood()|.
+Then, iterating through \lstinline|variance|, we compute the variables \lstinline|double dOmega, dAlpha, dBeta|.
+\iffalse
+	\begin{lstlisting}[firstnumber = 231,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	dOmega += ((-1/variance[i]) + (uSquaredArray[i]/Math.pow(variance[i],2)));@\newline@
+	dAlpha += (-uSquaredArray[i]/variance[i])@\newline@+ (Math.pow(uSquaredArray[i],2)/Math.pow(variance[i],2));@\newline@
+	dBeta 	+= (-variance[i-1]/variance[i])@\newline@+ ((uSquaredArray[i]*variance[i-1])/Math.pow(variance[i],2));
+\end{lstlisting}
+\fi
+The computation of these variables are implementations of the partial differential equations seen in equations~\ref{eqn:partialomega},~\ref{eqn:partialalpha}, and~\ref{eqn:partialbeta}.
+
+We then initialize the following array from equation~\ref{eqn:betavector}:
+\begin{lstlisting}[firstnumber = 236]
+	double[] vectorBeta = {-0.5*dOmega, 0.5*dAlpha, -0.5*dBeta};
+\end{lstlisting}
+
+Then we enter a while-loop.
+Firstly, we initialize the curvature matrix from equation~\ref{eqn:alphamatrix}:
+\begin{lstlisting}[firstnumber=241,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+double[][] curvatureMatrix = {
+{0.5*dOmega*dOmega * (1 + lambda), 0.5*dOmega*dAlpha, 0.5*dOmega*dBeta},@\newline@
+{0.5*dAlpha*dOmega, 0.5*dAlpha*dAlpha * (1 + lambda), 0.5*dAlpha*dBeta},@\newline@
+{0.5*dBeta*dOmega, 0.5*dBeta*dAlpha, 0.5*dBeta*dBeta * (1 + lambda)}};
+\end{lstlisting}
+
+Mathematically, we have a matrix and a vector, which is represented just as in equation~\ref{eqn:linear}.
+In order to solve the simultaneous equations, we use the \lstinline|linear| package from the library \lstinline|org.apache.commons.math3|~\cite{Apache:Math3}.
+The solution to the simultaneous equations is a an increment to the trial parameters.
+If this increment is too small, then we break out of the while loop.
+Otherwise, we increment the trial parameters.
+The trial parameters are subject to a few conditions:
+\begin{equation}
+	\label{eqn:parameterconditions}
+	a_j = \begin{cases}
+		0 \leq \omega \leq \infty  \\
+		0 \leq \alpha \leq 1       \\
+		0 \leq \beta \leq 1-\alpha \\
+		\alpha + \beta < 1
+	\end{cases}
+\end{equation}
+where $a_j$ is the parameter vector.
+If the trial parameters break these conditions, we increase the fudge factor by a factor of ten and move on to the next iteration of the loop.
+Otherwise, we will have found new trial parameters.
+So we break the loop and return \lstinline|trialParameters|.
+\end{document}

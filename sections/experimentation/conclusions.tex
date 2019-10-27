@@ -1,0 +1,37 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsection{Conclusions}
+
+In our experiments, we have had some successes and on the other hand, some questions remain unanswered.
+
+Firstly, we were able to demonstrate the benefits of diversification.
+In Section~\ref{sec:jointpositions} on page~\pageref{sec:jointpositions} onwards, we talk about how uncorrelated market assets can reduce the VaR in the portfolio.
+As such we saw that the proportion of VaR decreases as we increase the number of assets in the portfolio.
+
+With regards to the time horizon, we saw more violations on the whole with a 10-day time horizon.
+This is in line with our expectations.
+
+Some of results, on the other hand defy expectations.
+For instance, we saw more violations in our non-rejection intervals during the Stress Test.
+Now, is our implementation at fault or is the market at the current point in time \textit{stressed}?
+One factor to take into consideration is that we did not have any options in our portfolios during the Stress Test.
+
+The Monte Carlo and Analytical approaches generally performed well, but their results were expected to be similar.
+Perhaps the number of random walks plotted was insufficient.
+However, the Monte Carlo simulation is very slow.
+At 10,000 random walks, it took us seven hours on a \textit{Core i5} processor to run the entire battery of experiments.
+Unfortunately, increasing the number of random walks was not viable, given the time constraints.
+
+Despite this, the Monte Carlo and Analytical EWMA performed well.
+It is interesting to note that the lambda parameter that EWMA relies upon was taken from J.P. Morgan's RiskMetrics.
+Whereas parameters for GARCH(1,1) were estimated by our own implementation of Levenberg-Marquardt and we saw strong inconsistencies in its performance.
+
+The equal-weighted measures performed the worst
+It could be argued that the equal-weighted assumption does not work.
+And as for the Historical approach, which makes no probabilistic assumptions, but assumes that future market performance will be like the past, there is not much to say about it.
+It is consistently in between the other measures.
+
+Some questions which remain unanswered pertain to confidence and significance level.
+We saw, in once instance, that we had zero rejections with a 1-day time horizon, 95\% confidence and 5\% significance levels during the Stress Test.
+But ultimately, we still are not able to say how confident and how accurate we are willing to be with regard to significance and confidence levels.
+\end{document}

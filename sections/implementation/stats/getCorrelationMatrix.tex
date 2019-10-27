@@ -1,0 +1,21 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getCorrelationMatrix()}
+
+We are able to construct correlation matrices using any of our variance and volatility methods.
+Thanks to the encapsulation discussed above, we are able write quite general code that still allows us to switch between the types of estimates very easily.
+First we declare a two-dimension square matrix.
+\begin{center}
+	\lstinline|double[][] matrix = new double[numCol][numCol];|
+\end{center}
+It has a length equal to the number of stock variables in our portfolio.
+Using a nested loop, we iterate through each element and compute the correlation as in equation~\ref{eqn:correlation}.
+
+That is, at each element we compute the covariance between the $i$th and $j$th variable using the method \lstinline|getVariance(measure)|, where \lstinline|measure| is an integer that simply specifies what sort of estimate we want (EW, EMWA or GARCH(1,1).
+At the same time, with the \lstinline|getVolatility(measure)| method, we compute the volatility estimate for the $i$th variable and the same for the $j$th variable.
+\begin{lstlisting}[firstnumber = 94]
+	matrix[i][j] = covXY / (sigmaX * sigmaY);
+\end{lstlisting}
+Then we take the covariance estimate and divide it by the product of our two volatility estimates to compute the correlation estimate for that element in the matrix.
+Once we populate the entire matrix, we return \lstinline|matrix|.
+\end{document}

@@ -1,0 +1,36 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Volatility methods}
+
+In the univariate case, each volatility estimate is the square root of the estimate of daily variance.
+We have three methods that return volatility estimates: \lstinline|getEWVolatility()|, \lstinline|getEWMAVolatility()|, and \lstinline|getGARCH11Volatility()|.
+Implementing each of these methods is simple.
+\begin{lstlisting}[firstnumber = 65,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+    public double getEWVolatility(){return Math.sqrt(getEWVariance());}
+    public double getEWMAVolatility(){return Math.sqrt(getEWMAVariance());}
+    public double getGARCH11Volatility(){return Math.sqrt(getGARCH11Variance());}
+\end{lstlisting}
+We call a method for the corresponding estimate of daily-variance and take the square root.
+
+\subsubsection{Encapsulating Variance and Volatility}
+
+Because we have so many methods for computing variance and volatility, it can be difficult to write code that isn't cumbersome.
+For instance, suppose we have a single array of price changes.
+We want to use a loop to compute all three variance estimates, but we cannot.
+We have to instead avoid a loop and write repetitive code that calls each method one by one.
+
+To avoid this, we have implemented some helper methods.
+These take an input variable \lstinline|int measures|, in which certain values are encoded to correspond to another method.
+The integers 1, 2, 3 encode to \textit{Equal-Weighted}, \textit{EWMA},  and  \textit{GARCH(1,1)} respectively.
+
+We have two methods in this case: \lstinline|getVariance(int measure)| and \lstinline|getVolatility(int measure)|.
+For example, the following code will return an Equal-Weighted variance estimate of our price changes.
+\begin{center}
+	\lstinline|double variance = new Stats(priceChanges, priceChanges).getVariance(1);|
+\end{center}
+The next example will return the GARCH(1,1) volatility estimate:
+\begin{center}
+	\lstinline|double volatility = new Stats(priceChanges, pricechanges).getVolatility(3);|
+\end{center}
+This is a particularly useful feature when it comes to our implementation of \lstinline|getCorrelationMatrix()|.
+\end{document}

@@ -1,0 +1,11 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\section{Experimentation}
+
+We test four types of portfolio: single-stock, two-stock, three-stock, and three-stock with options on the stocks.
+The stock symbols we use are: GOOG, AAPL, and MSFT.
+We will look at each of these portfolios with 1-day and 10-day time horizons and 95\% and 99\% confidence levels.
+Each experiment will use 5 years of data and perform back testing and stress testing, where our stress test is a five year back test beginning on 1st January 2007.
+It's important to note that options were excluded from out portfolio during the stress test, due to a complete lack of data.
+The full battery of inputs for each experiment can be found in \lstinline|runTests.java|.
+\end{document}

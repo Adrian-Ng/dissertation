@@ -1,0 +1,43 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\section{How To Use My Project}
+
+\paragraph{Using the .jar}
+
+Our program is \lstinline|VaR.jar|.
+
+Suppose we want to run an experiment where our portfolio consists of a single stock symbol: GOOG at 100 shares and zero options.
+We wish to take 5 years of data, with a 1-day time horizon and confidence interval of 95\%.
+
+We execute the \lstinline|.jar| with the command: \lstinline|java -jar VaR.jar GOOG 100 0 5 1 0.95|.
+Now, suppose want three stocks in our portfolio, but no options. 
+We must use a pipe separated string to separate the stock symbols and stock deltas.
+This time our command is 
+\begin{lstlisting}[numbers=none]
+java -jar VaR.jar GOOG|AAPL|MSFT 100|200|100 0 5 1 0.95
+\end{lstlisting}
+That is, we assume a portfolio consisting of the symbols GOOG, AAPL and MSFT with 100,200, and 100 shares respectively.
+Now we include options on the shares.
+The command is now:
+\begin{lstlisting}[numbers=none]
+java -jar VaR.jar GOOG|AAPL|MSFT 100|200|100 40|30|40 5 1 0.95
+\end{lstlisting}
+That is we now have 40, 30, 40 put options for GOOG, AAPL, and MSFT.
+
+\paragraph{Compilation}
+
+The \lstinline|.jar| file was compiled using IntelliJ IDEA 2016.3.7 on a machine running Windows 10.
+The source files and their dependencies are included in a folder called \lstinline|src| and \lstinline|lib| respectively.
+
+\paragraph{Output}
+
+Running the program will take some time.
+On a Core i5, a single experiment can take between 5 and 20 minutes to run, depending on the portfolio.
+On \lstinline|linux.cim.rhul.ac.uk|, this will take considerably longer.
+Program outputs will be saved to a folder in the directory of the \lstinline|.jar| file.
+These will include: 
+\lstinline|.csv| files containing the simulated stock prices and put prices from Monte Carlo and Historical simulations;
+a \lstinline|.csv| containing the 1000 moments of estimated VaR;
+a \lstinline|output.txt| file containing logging;
+and lastly \lstinline|rawData.csv| which contains the experimental results.
+\end{document}

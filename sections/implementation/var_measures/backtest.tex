@@ -1,0 +1,118 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{BackTest.java}
+
+This is our implementation of the Back Testing as discussed in Section~\ref{section:backtesting}.
+\lstinline|BackTest.java| uses five years of historical stock data to compute one thousand moments of VaR, which have each been computed using data from the 252 days prior to that moment.
+It is capable of handling portfolios with options, and does so without having any historical options data - it simulates them from the stock data.
+In addition to the \lstinline|main()| method, we also have \lstinline|testCoverage()| and \lstinline|testKupiecPF()| which use the \lstinline|distribution| package from the \lstinline|org.apache.commons.math3| library~\cite{Apache:Math3}.
+These are implementations of the the two coverage tests: Standard and Kupiec's PF.
+Both define non-rejection intervals that tell us what number of violations is acceptable.
+
+\paragraph{Preparation}
+
+Part of the whole implementation of the \lstinline|VaR| package involves printing information to a log file, which contains helpful information with regards to the status of the program.
+During back testing, we invoke our VaR measure many times, resulting in an information overload - the log is meant to legible for human eyes and more information is not necessarily better.
+As such, we simply turn it off at certain points in \lstinline|BackTest.java|. 
+To do this, this implementation uses code submitted by Baydoğan~\cite{Baydoğan:2011} on Stack Overflow.
+This means redefining standard output from \lstinline|System.out| to the folowing:
+\begin{lstlisting}[firstnumber=158,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+PrintStream dummyStream @\newline= new PrintStream(new OutputStream() {public void write(int b) {//NO-OP}});
+\end{lstlisting}
+
+Next, we initialize two copies of \lstinline|optionsData[] options|: \lstinline|optionsBackTest1| and \lstinline|optionsBackTest2|.
+We cannot simply write, for example, \lstinline|optionsData[] options2 = options|; they both reference the same underlying object and are not unique objects.
+To do this, we defined a copy constructor in \lstinline|optionsData.java|.
+Therefore, we simply initialize the variable as follows:
+\begin{lstlisting}[firstnumber = 171]
+optionsBackTest1[i] = new optionsData(options[i]);
+\end{lstlisting}
+
+These copies serve two purposes.
+Firstly, we need to iterate through our five years of stock data and predict all option prices.
+As we go back in time, we must increment the maturity date in the instance of \lstinline|optionsData|.
+We use a modulo of 252 to ensure the maturity data resets to zero on the same date each year, as it is not realistic that we hold on to the same put option for so long.
+
+Secondly, each time we invoke \lstinline|Historic.java| or \lstinline|MonteCarlo.java|, we will need to update the maturity date and current put price accordingly.
+
+All in all, we will return seven VaR estimates at each moment: Historical and (EW, EWMA and GARCH(1,1)) for both Analytical and Monte Carlo.
+We want to declare a two-dimensional array that can accommodate all these VaR estimates:
+\begin{lstlisting}[firstnumber = 179]
+double[][] momentsVaR = new double[numMeasures][numMoments];
+\end{lstlisting}
+
+\paragraph{Procedure}
+
+The procedure for \lstinline|BackTest.java| is as follows:
+					\begin{algorithm}
+						\caption{Class: BackTest.java}
+						\begin{algorithmic}[1]
+						\Function{\lstinline|BackTest.java|}{\lstinline|Parameters p,optionsData[] options|}
+						\label{class:BackTest}
+						\State \lstinline|int numYears|$\gets$5	
+						\State \lstinline|int numMoments|$\gets$1000
+						\State \lstinline|double[][] stockPrices| $\gets$ \lstinline|getStocks(numYears)|	
+						\ForAll {i in \lstinline|stockPrices|}						
+               						\State \lstinline|optionsBackTest1.setDaystoMaturity((daystoMaturity+i)%252)|
+               						\State \lstinline|optionPrices[i] = optionsBackTest1.getBlackScholesPut(stockPrices[i])|
+							\State Value Portfolio $\to$ \lstinline|valuePi|
+							\State Calculate daily returns() $\to$ \lstinline|deltaPi|
+						\EndFor						
+						\ForAll {i in \lstinline|numMoments|}
+							\State Take 252 days prior to moment $i$: \lstinline|stockPrices| $\to$ \lstinline|momentStockPrices|
+							\State Take options at moment $i$: \lstinline|optionsPrices| $\to$ \lstinline|momentOptionPrices|
+							\State Estimate VaR at moment $i\to$\lstinline|momentsVaR[][i]|
+							\If {\lstinline|deltaPi| $>$ \lstinline|momentsVaR|} {\lstinline|violations++|}
+							\EndIf
+						\EndFor
+						\State \lstinline|ArrayListBT|$\gets$\lstinline|doCoverageTests(p.getConfidenceLevel, numMoments,violations)|
+						\State \Return \lstinline|ArrayListBT|						
+						\EndFunction
+						\end{algorithmic}
+					\end{algorithm}
+
+\paragraph{doCoverageTests()}
+
+Once we have a count of the number of times the real losses in the portfolio exceeded the VaR estimate (i.e., the number of violations), we invoke \lstinline|doCoverageTests()|.
+Now, we perform our coverage tests at a number of significance levels.
+This method iterates through each significance level and runs \lstinline|testCoverage()| \lstinline|testKupiecPF()|.
+At each iteration, the results from these methods are stored in instances of \lstinline|BackTestData| called \lstinline|standardBT| and \lstinline|kupiecBT| respectively.
+These results are then added to an ArrayList and returned to \lstinline|main()|.
+
+\paragraph{testCoverage()}
+
+This method is the implementation of the Standard Coverage test from Section~\ref{section:coveragestandard}.
+First we initialize \lstinline|int alpha = numMoments + 1| and construct a binomial distribution in the following way:
+\begin{lstlisting}[firstnumber=19,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+BinomialDistribution distribution @\newline@= new BinomialDistribution(alpha, 1-confidenceX);
+\end{lstlisting}
+This class gives us the \lstinline|cumulativeProbability| method.
+We use this a series of while-loops in which we increment \lstinline|int a| until \lstinline|pr <= epsilon/2| where:
+\begin{lstlisting}[firstnumber = 24]
+pr = distribution.cumulativeProbability(a);
+\end{lstlisting}
+and likewise we minimize \lstinline|int b| until \lstinline|pr >= epsilon/2| where:
+\begin{lstlisting}[firstnumber = 30]
+pr = 1 - distribution.cumulativeProbability(a);
+\end{lstlisting}
+This process ultimately arrives us at some most likely lower and upper values of the the non-rejection interval which could be either $a+n, b$ or $a, b + n$.
+Deciding between the two is another similar step involving maximising likelihoods.
+Once decided, we return the one-dimensional array \lstinline|int[] nonRejectionInterval|.
+
+\paragraph{testKupiecPF()}
+
+This method is the implementation of the Standard Coverage test from Section~\ref{section:coveragekupiec}.
+First we construct a $\chi^2$ distribution and use the \lstinline|inverseCumulativeProbability| method to compute the quantile.
+\begin{lstlisting}[firstnumber=71,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+        double quantile @\newline@= distribution.inverseCumulativeProbability(1-epsilon);
+\end{lstlisting}
+where \lstinline|epsilon| is a given significance level.
+
+Then we enter a while-loop in which we increment from \lstinline|int i = 0|.
+On every iteration, we call \lstinline|loglikelihood()|, which is the log-likelihood ratio given in equation~\ref{eqn:kupieclikelihood}.
+If \lstinline|loglikelihood()| decreases below \lstinline|quantile|, then the lower interval is either the current or previous increment, depending on whichever value gets us a likelihood closest to \lstinline|quantile|.
+We do the same for the upper interval, except we look for an increase of \lstinline|loglikelihood| above \lstinline|quantile|.
+
+Once we have found our intervals, we return the one-dimensional array \lstinline|int[] nonRejectionInterval|.
+
+\end{document}

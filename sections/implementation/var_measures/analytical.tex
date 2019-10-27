@@ -1,0 +1,74 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Analytical.java}
+
+This class makes use of the \lstinline|distribution| library from the \lstinline|apache.commons.math3| package~\cite{Apache:Math3}.
+This is our implementation of the Analytical approach described in Section \ref{section:analytical}.
+More specifically, this is an implementation of the Linear Model shown in equation ~\ref{eqn:linear}.
+The output of this class is a vector of three VaR estimates: one for each of our variance and volatility measures.
+
+\paragraph{Preparation}
+Before we can perform the necessary calculations, we must first prepare our variables, of which there are a few.
+Notably, we first initialize a standard Gaussian variable:
+\begin{lstlisting}[firstnumber=14]
+	NormalDistribution distribution = new NormalDistribution(0,1);
+\end{lstlisting}
+We use the \lstinline|inverseCumulativeProbability()| method to find our percentile as described in equation~\ref{eqn:definepercentile}:
+\begin{lstlisting}[firstnumber = 15]
+	double riskPercentile = - distribution.inverseCumulativeProbability(1-p.getConfidenceLevel());
+\end{lstlisting}
+where \lstinline|p.getConfidenceLevel()| is our confidence level $c$.
+
+Additionally, we initialize the array \lstinline|stockDelta| and populate it from \lstinline|Parameters p| using the method \lstinline|getStockDelta()|.
+And for convenience, we initialize a one-dimensional array \lstinline|double[] currentStockPrices| for our current stock prices  and populate it from \lstinline|stockPrices|, which is a two-dimensional array.
+
+The process for \lstinline|Analytical.java| continues as follows:
+					\begin{algorithm}[H]
+						\caption{Class: Analytical.java}
+						\begin{algorithmic}[1]
+						\Function{Analytical.java}{\lstinline|Parameters p, double[][] stockPrices|}
+							\label{class:Analytical}		
+							\State \lstinline|String[] volatilityMeasures| $\gets$ \lstinline|{EW, EWMA, GARCH}|
+							\State \lstinline|double[][] priceChanges| $\gets$ \lstinline|stockPrices.getPercentageChanges()|
+								\ForAll {i in volatilityMeasures}	
+									\State \lstinline|correlationMatrix| $\gets$ \lstinline|priceChanges.getCorrelationMatrix(i+1)|
+									\State \lstinline|volatility| $\gets$ \lstinline|priceChanges.getVolatility(i+1)|
+									\State Compute Sum of Linear Components $\to$ \lstinline|sum|
+									\State \lstinline|VaR| $\gets$ \lstinline|Math.sqrt(p.getTimeHorizon())|$\times$\lstinline|riskPercentile|$\times$\lstinline|Math.sqrt(sum)|
+								\EndFor
+							\State \Return \lstinline|VaR|
+						\EndFunction
+						\end{algorithmic}
+					\end{algorithm}
+
+\iffalse
+\paragraph{Computation}
+
+Now we perform the necessary calculations using methods we described in Section \ref{section:stats}.
+First we compute our price changes \lstinline|doube[][] priceChanges| using \lstinline|getPercentageChanges()|.
+
+Then we compute our correlation matrices.
+We have three ways of estimating variances and volatilities, so we compute three matrices in a for-loop.
+\begin{lstlisting}[firstnumber = 33]
+correlationMatrix[i] = new Stats(priceChanges).getCorrelationMatrix(i+1);
+\end{lstlisting}
+
+Then for each stock variable, we compute the vector \lstinline|volatility| of three volatility measures using \lstinline|getVolatility(int measure)|.
+Alternatively, we could replace the variables \lstinline|correlationMatrix| and \lstinline|volatility| with some covariance matrix.
+We would simply use \lstinline|getCovarianceMatrix(int measure)|. 
+The result would be the same and we would have one fewer variable.
+
+Nonetheless, at this point, we have all the necessary components of the Linear Model.
+We can now compute the sum of these components.
+To do this, we use two nested for-loops in which we iterate through each element in our three correlation matrices.
+At each element, we sum the following:
+\begin{lstlisting}[firstnumber=48,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+sum[k] += stockDelta[i] * stockDelta[j] @\newline@* currentStockPrices[i] * currentStockPrices[j] @\newline@* correlationMatrix[k][i][j] @\newline@* volatility[k][i] * volatility[k][j];
+\end{lstlisting}
+where \lstinline|sum| is a vector of three elements. Now, for each of these three elements, we calculate VaR:
+\begin{lstlisting}[firstnumber=51,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+VaR[i] = Math.sqrt(p.getTimeHorizon()) * riskPercentile @\newline@* Math.sqrt(sum[i]);
+\end{lstlisting}
+\lstinline|Analytical.java| is now finished and we return \lstinline|VaR|.
+\fi
+\end{document}

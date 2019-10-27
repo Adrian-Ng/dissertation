@@ -1,0 +1,91 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{Historic.java}
+\label{section:javahistoric}
+This is our implementation of the Historical VaR measure as described in Section~\ref{section:historical}.
+Unlike some other measures we implement, it returns only a single estimate of VaR.
+
+\paragraph{Preparation}
+
+We must first get some data from \lstinline|Parameters p|.
+In doing so, we initialize \lstinline|int[] stockDelta| and \lstinline|int[] optionDelta|.
+
+Then we declare some variables.
+\begin{lstlisting}[firstnumber=21]
+        double[] currentStockPrices = new double[numSym];
+        double[][] strikePrices = new double[numSym][];
+        double[][] currentPutPrices = new double[numSym][];
+        int[] daystoMaturity = new int[numSym];
+        double todayPi = 0;
+\end{lstlisting}
+These will hold current stock prices, the parameters of our put options and today's value of our portfolio.
+We iterate through each of our stock symbols in a for-loop and populate these in the following way:
+\begin{lstlisting}[firstnumber=28, escapeinside={@}{@}]
+            currentStockPrices[i] = stockPrices[i][0];
+            strikePrices[i] = options[i].getStrikePrices();
+            daystoMaturity[i] = options[i].getDaystoMaturity();
+            currentPutPrices[i] = options[i].getPutPrices();
+            int numPuts = currentPutPrices[i].length;
+            todayPi += stockDelta[i] * currentStockPrices[i] @\newline@+ optionDelta[i] * currentPutPrices[i][numPuts-1];
+\end{lstlisting}
+
+The process for \lstinline|Historic.java| continues as follows:
+					\begin{algorithm}[H]
+						\caption{Class: Historic.java}
+						\begin{algorithmic}[1]
+						\Function{Historic.java}{\lstinline|Parameters p, double[][] stockPrices, optionsData[] options|}
+						\label{class:Historic}									
+						\State \lstinline|double[][] priceChanges| $\gets$ \lstinline|stockPrices.getPercentageChanges()|
+						\State \lstinline|tomorrowStockPrices| $\gets$ \lstinline|priceChanges| $\times$ \lstinline|currentStockPrices|
+						\State \lstinline|tomorrowPutPrices| $\gets$ \lstinline|options.getBlackScholesPut(tomorrowStockPrices)|
+						\State Revalue Portfolio $\to$ \lstinline|tomorrowPi|
+						\State Sort \lstinline|tomorrowPi| Ascending
+						\State \lstinline|index = (1-p.getConfidenceLevel())|$\times$\lstinline|tomorrowPi.length|
+						\State \lstinline|VaR =(todayPi - tomorrowPi[index])|$\times$\lstinline|Math.sqrt(p.getTimeHorizon())|
+						\State \Return \lstinline|VaR|
+						\EndFunction
+						\end{algorithmic}
+					\end{algorithm}
+\iffalse
+\paragraph{Computation}
+
+Now we perform the necessary calculations using methods we described in Section \ref{section:stats}.
+First we compute our price changes \lstinline|double[][] priceChanges| using \lstinline|getPercentageChanges()|.
+
+Then we iterate through all of our price changes, building up a distribution of tomorrow's stock prices using today's current stock variables \lstinline|currentStockPrices| and \lstinline|stockDelta|.
+To perform this iteration, we use a nested for-loop, at each step going through every element in \lstinline|priceChanges|.
+At each element, we compute:
+\begin{lstlisting}[firstnumber=42,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	tomorrowStockPrices[i][j] = (priceChanges[i][j] * currentStockPrices[i])@\newline@ + currentStockPrices[i];
+\end{lstlisting}
+	
+We then use these stock price predictions to price tomorrow's put options. 
+Here, we make use of \lstinline|getBlackScholesPut()|, which is a method defined in \lstinline|optionsData.java|.
+Just as before, we use a nested for-loop but this time we iterate through every element in a different variable: \lstinline|tomorrowStockPrices|.
+At each element, we compute:
+\begin{lstlisting}[firstnumber=57,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	tomorrowPutPrices[i][j] @\newline@= options[i].getBlackScholesPut(tomorrowStockPrices[i][j]);
+\end{lstlisting}
+
+Now we can revalue our portfolio using our predictions for tomorrow's market variables.
+First we declare the one-dimensional array \lstinline|double[] tomorrowPi|.
+Then, using a for-loop, we iterate through each our predictions, computing the combined value of all assets that contribute to our portfolio.
+At each iteration, we use another loop in which we loop through each stock symbol and compute the predicted value of tomorrow's portfolio value as follows:
+\begin{lstlisting}[firstnumber=52,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+for (int j = 0; j < numSym; j++)
+                sum += (tomorrowStockPrices[j][i] * stockDelta[j]) @\newline@+ (tomorrowPutPrices[j][i] * optionDelta[j]);
+\end{lstlisting}
+where \lstinline|sum| is tomorrow's predicted portfolio value for this iteration.
+Lastly, we set \lstinline|tomorrowPi[i]= sum| at the end of each iteration.
+
+Once we have a full distribution of tomorrow's portfolio value in \lstinline|tomorrowPi|, we sort the array.
+We use the \lstinline|Arrays.sort()| method, which sorts arrays in order of ascending value.
+Therefore, the index of our desired cut-off point for a given confidence level, is computed as follows:
+\begin{lstlisting}[firstnumber=58,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+double index = (1-p.getConfidenceLevel())*tomorrowPi.length;
+double VaR = (todayPi - tomorrowPi[(int) index]) @\newline@* Math.sqrt(p.getTimeHorizon());
+\end{lstlisting}
+In the last step, we compute the increment $\Delta\Pi$ and multiply by the square root of our time horizon.
+At this point we reach the end of \lstinline|Historic.java| and we return \lstinline|VaR|.
+\fi
+\end{document}

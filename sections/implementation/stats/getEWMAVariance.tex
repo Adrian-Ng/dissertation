@@ -1,0 +1,22 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getEWMAVariance()}
+
+This method follows equation~\ref{eqn:covarianceEWMA} which is the EWMA estimate of daily-covariance.
+The reasoning here for implementing covariance and not simply variance is the same as in \lstinline|getVariance()|.
+\begin{lstlisting}[firstnumber = 45]
+        double lambda = 0.94;
+        double EWMA = xVector[numRow -1] * yVector[numRow -1];	
+\end{lstlisting}
+
+Here, we use J.P. Morgan's RiskMetrics estimation of lambda $\lambda = 0.94$.
+The computation of EWMA is recursive and iterative so we must define some initial estimate for variance to begin with.
+We use the product of the two earliest data points.
+We then iterate through the rest of the data, going forwards through time.
+At each iteration, we update our EWMA estimate.
+\begin{lstlisting}[firstnumber = 47,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	for (int i = 1; i < numRow; i++)
+            EWMA = lambda * EWMA @\newline@+ (1-lambda) * xVector[numRow -1 - i] * yVector[numRow -1 - i];
+\end{lstlisting}
+At the end of the loop, we return \lstinline|EWMA|.
+\end{document}
