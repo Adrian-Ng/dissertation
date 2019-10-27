@@ -1,0 +1,124 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{MonteCarlo.java}
+
+This is our implementation of the Monte Carlo VaR measure as described in Section~\ref{section:montecarlo}.
+In \lstinline|MonteCarlo.java|, we produce three estimates for VaR.
+This is because we have three variance and volatility measures.
+In addition to the \lstinline|main()| method, we will define here two private methods \lstinline|randomWalk| and \lstinline|weinerProcess|.
+Both are integral parts to simulating a so-called random walk.
+
+\paragraph{Preparation}
+
+We begin in identical fashion to \lstinline|Historic.java| in which we get some data from \lstinline|Parameters p|, initialize some arrays and calculate the current value of the portfolio.
+Please refer to~\ref{section:javahistoric} for more detail as we will skip the parts that are identical.
+
+We first initialize some variables that are key to the Monte Carlo simulation.
+We initialize \lstinline|int N = 24;| and \lstinline|int paths = 10000;|.
+These are the number of steps in each random walk and the number of random walks respectively.
+We also initialize \lstinline|double dt = 1/N;| which gives us time steps 1 hour in size.
+
+The procedure for \lstinline|MonteCarlo.java| continues as follows:
+					\begin{algorithm}[H]
+						\caption{Class: MonteCarlo.java}
+						\begin{algorithmic}[1]
+						\Function{\lstinline|MonteCarlo.java|}{\lstinline|Parameters p,double[][] stockPrices,optionsData[] options|}
+						\label{class:MonteCarlo}									
+						\State \lstinline|int N| $\gets 24$
+						\State \lstinline|int paths| $\gets 10000$
+						\State \lstinline|double dt| $\gets 1/N$
+						\State \lstinline|String[] volatilityMeasures| $\gets$ \lstinline|{EW, EWMA, GARCH}|
+						\State \lstinline|double[][] priceChanges| $\gets$ \lstinline|stockPrices.getPercentageChanges()|
+						\ForAll {i in volatilityMeasures}
+							\State \lstinline|choleskyDecomposition[i]| $\gets$ \lstinline|priceChanges.getCholeskyDecomposition(i+1)|
+							\ForAll {j in paths}
+								\State \lstinline|tomorrowStockPrices[j]|$\gets$\lstinline|randomWalk(choleskyDecomposition)|
+							\EndFor
+							\State \lstinline|tomorrowPutPrices| $\gets$ \lstinline|options.getBlackScholesPut(tomorrowStockPrices)|
+							\State Revalue Portfolio $\to$ \lstinline|tomorrowPi|
+							\State Sort \lstinline|tomorrowPi| Ascending
+							\State \lstinline|index = (1-p.getConfidenceLevel())|$\times$\lstinline|tomorrowPi.length|
+							\State \lstinline|VaR =(todayPi - tomorrowPi[index])|
+						\EndFor 
+						\State \Return \lstinline|VaR|						
+						\EndFunction
+						\end{algorithmic}
+					\end{algorithm}
+					
+\iffalse
+\paragraph{Computation}
+
+We compute the price changes of our stock prices in the usual way with \lstinline|getPercentageChanges()| and initialize \lstinline|double[][] priceChanges|.
+Because we have three measures of variance and volatility, we build three matrices representing the Cholesky Decomposition of the variance-covariance matrix $\Sigma$.
+To do this, we simply initialize our variable \lstinline|choleskyDecomposition| with the following constructor:
+\begin{lstlisting}[firstnumber=77,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	choleskyDecomposition[i] = new Stats(priceChanges).getCholeskyDecomposition(i + 1);
+\end{lstlisting}
+where \lstinline|int i| is our for-loop iterator.
+Then we simulate tomorrow's stock prices via Monte Carlo simulation by invoking the \lstinline|simulatePath()| method.
+We use a nested for-loop because for each Cholesky Decomposition, we must generate 10,000 random walks.
+In doing so, we build three very large distributions for tomorrow's stock prices.
+Below is a snippet of code illustrating the invokation of the method \lstinline|simulatePath()| at each point in the nested loop.
+\begin{lstlisting}[firstnumber=85,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+double[] tuplePercentageChanges @\newline@= simuluatePath(N, @\newline@currentStockPrices, @\newline@dt, @\newline@choleskyDecomposition[i]);
+\end{lstlisting}
+Using these stock prices, we are able to price tomorrow's options.
+We iterate through every stock price in our distributions and produce an option price for each.
+This is done using the same method as we used in the Historical simulation in section~\ref{section:javahistoric}: \lstinline|getBlackScholesPut()|.
+\begin{lstlisting}[firstnumber=94,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+                    tomorrowPutPrices[i][j][k] = options[j].getBlackScholesPut(tomorrowStockPrices[i][j][k]);
+\end{lstlisting}
+Now we have predictions for all of tomorrows market variables, we initialize \lstinline|double[][] tomorrowPi| and revalue the portfolio for all of tomorrow's predictions.
+What follows is identical in nature to the Historical simulation, so we do not go in to great detail.
+We loop three times through \lstinline|double[] tomorrowPi| and do as follows:
+\begin{lstlisting}[firstnumber=107,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+            Arrays.sort(tomorrowPi[i]);
+            double index = (1 - p.getConfidenceLevel()) * tomorrowPi[i].length;
+            VaR[i] = (todayPi - tomorrowPi[i][(int) index]) * Math.sqrt(p.getTimeHorizon());        
+\end{lstlisting}
+We sort our distributions in ascending order and find the cut-off point for our confidence level.
+Then, we calculate the increment $\Delta\Pi$ and multiply by the square root of our time horizon for our estimate of VaR.
+\lstinline|MonteCarlo.java| ends and we return \lstinline|VaR|, which this time contains three estimates of VaR.
+\fi
+\paragraph{randomWalk()}
+
+This method is our implementation of equation~\ref{eqn:montecarlo}, the stochastic process describing the Monte Carlo simulation.
+It takes four parameters: \lstinline|int N|, the number of steps; \lstinline|double dt|,  he magnitude of each step; \lstinline|double[] currentStockPrices| and \lstinline|double[][] choleskyDecomposition|.
+
+Monte Carlo is a discrete process, so we declare a grid in which we simulate our random walks:
+\begin{lstlisting}[firstnumber = 27]
+	double[][] grid = new double[numSym][N];
+\end{lstlisting}
+The starting values at the beginning of each walk will be our current stock prices.
+So for \lstinline|N| steps, we build some random walks, one for each stock symbol.
+We generate a vector of correlated random variables that take the multivariate Gaussian distribution $N\sim\phi(0,L)$, where $L$ is represented by the variable \lstinline|choleskyDecomposition|.
+We do this in the following way:
+\begin{lstlisting}[firstnumber=107,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	grid[j][i] = (correlatedRandomVariables[j] @\newline@* grid[j][i-1] * Math.sqrt(dt)) + grid[j][i-1];
+\end{lstlisting}
+where \lstinline|correlatedRandomVariable[j]| represents our vector of correlated random variables at step \lstinline|j|.
+This is initialized by the method \lstinline|weinerProcess()|.
+When we have reached the end of the grid, we return the terminal stock price for each stock symbol via: \lstinline|terminalStockPrice[i] = grid[i][N-1];|.
+
+\paragraph{weinerProcess()}
+
+The Weiner Process is the $dz = \epsilon\sqrt{dt}$ part of equation~\ref{eqn:montecarlo}, where $\epsilon$ is the standard Gaussian variable.
+We intialize the following to simulate our Gaussian variable.
+\begin{lstlisting}[firstnumber = 9]
+Random epsilon = new Random();
+\end{lstlisting}
+For each of our stock symbols, we sample from this variable and populate an array that is IID.
+\begin{lstlisting}[firstnumber = 14]
+	dz[i] = epsilon.nextGaussian();
+\end{lstlisting}
+Then we perform the matrix multiplication of \lstinline|double[] dz| and \lstinline|double[][] choleskyDecomposition|, which gives us \lstinline|double[] correlatedRandomVariables|.
+\begin{lstlisting}[firstnumber = 17]
+for(int i = 0; i < numSym; i++) {
+            double sum = 0;
+            for (int j = 0; j < numSym; j++)
+                sum += choleskyDecomposition[i][j] * dz[j];
+            correlatedRandomVariables[i] = sum;
+\end{lstlisting}
+Then we reach the end of \lstinline|weinerProcess()| and return \lstinline|correlatedRandomVariables|.
+
+\end{document}
