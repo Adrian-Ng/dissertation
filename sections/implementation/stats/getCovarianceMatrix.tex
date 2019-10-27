@@ -1,0 +1,16 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getCovarianceMatrix()}
+
+Building a variance-covariance matrix is similar to building the correlation matrix - especially since covariance and correlation are so mathematically intertwined.
+As before, we declare a two dimensional matrix
+\begin{lstlisting}[firstnumber = 101]
+ 	double[][] covarianceMatrix = new double[numCol][numCol];
+\end{lstlisting}
+We iterate through each element in the same way using a nested loop and populate the value of each element by calling the \lstinline|getVariance(measure)| method.
+\begin{lstlisting}[firstnumber=104,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+ covarianceMatrix[i][j] @\newline@= new Stats(multiVector[i], multiVector[j]).getVariance(measure);
+ \end{lstlisting}
+When the entire matrix is populated, we return \lstinline|covarianceMatrix|.
+
+\end{document}

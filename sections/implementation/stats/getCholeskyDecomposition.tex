@@ -1,0 +1,32 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getCholeskyDecomposition()}
+
+This method is an implementation of the Cholesky Decomposition, following equations~\ref{eqn:diagonalL} and~\ref{eqn:belowdiagonalL}.
+In our Monte Carlo simulation, we are trying to find $L$ such that $\Sigma = LL^T$ where $\Sigma$ is our variance-covariance matrix.
+
+This method does not take a covariance matrix as an input.
+That is because in \lstinline|MonteCarlo.java|, we do not need one and as such never create one.
+Therefore, we first build a covariance matrix using the method \lstinline|getCovarianceMatrix(measure)|.
+Then we initialize a matrix for $L$.
+\begin{lstlisting}[firstnumber=108,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+		double[][] covarianceMatrix = getCovarianceMatrix(measure);
+		double[][] cholesky@\newline@ = new double[covarianceMatrix.length][covarianceMatrix.length];
+\end{lstlisting}
+
+Then we enter a nested loop and iterate through each of the remaining elements.
+At every element, we do the following:
+\begin{lstlisting}[firstnumber=113,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+                double sum = 0;
+                for (int k = 0; k < j; k++)
+                    sum += cholesky[i][k] * cholesky[j][k];
+                if(i==j)
+                    cholesky[i][j] = Math.sqrt(covarianceMatrix[i][j] - sum);
+                else
+                    cholesky[i][j] = (covarianceMatrix[i][j] - sum) / cholesky[j][j];
+\end{lstlisting}
+That is, we compute \lstinline|sum| as $\sum_{k=1}^{i-1}L_{ik}L_{jk}$.
+Then, if we are on a diagonal, we subtract \lstinline|sum| from the value on the same element on the covariance matrix and take the square root.
+If we are \textit{under} the diagonal, we don't take the square root but divide by the diagonal element at $i$.
+When we exit the loop, we return the matrix \lstinline|cholesky|.
+\end{document}

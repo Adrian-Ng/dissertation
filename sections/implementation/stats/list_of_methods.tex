@@ -1,0 +1,49 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{List of Methods}
+
+The following is a list of public methods in \lstinline|Stats.java|. 
+\begin{center}
+\begin{tabular}{||c | c | c ||} 
+\hline
+Name & Constructor & Returns \\ [0.5ex] 
+\hline\hline
+\lstinline|getMean()| & \lstinline|double[]| & \lstinline|double|\\ 
+\hline
+\lstinline|getVariance(int measure)| & \lstinline|double[], double[]| & \lstinline|double| \\
+\hline
+\lstinline|getEWVariance()| & \lstinline|double[], double[]| & \lstinline|double| \\
+\hline
+\lstinline|getEWMAVariance()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getGARCH11Variance()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getVolatility(int measure)| & \lstinline|double[]| & \lstinline|double|\\
+\hline
+\lstinline|getEWVolatility()| & \lstinline|double[]| & \lstinline|double|\\
+\hline
+\lstinline|getEWMAVolatility()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getGARCH11Volatility()| & \lstinline|double[], double[]| & \lstinline|double|\\
+\hline
+\lstinline|getCorrelationMatrix(int measure)| & \lstinline|double[]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getCovarianceMatrix()| & \lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getCholeskyDecomposition()| & \lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getPercentageChanges()| &\lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|getAbsoluteChanges()| & \lstinline|double[][]| & \lstinline|double[][]|\\
+\hline
+\lstinline|printMatrixToCSV()|* &\lstinline|double[][]| & \lstinline|void|\\
+\hline
+\lstinline|printVectorToCSV()|* & \lstinline|double[]| & \lstinline|void|\\[1ex] 
+\hline
+\end{tabular}
+\end{center}
+(*) While these methods do not perform statistical calculations, they do provide us with an easy way of printing data to \lstinline|csv|.
+This is desirable if we want to analyse the distribution of our stock price changes produced from Monte Carlo simulation or look at the 1000 VaR estimates produced in Backtesting.
+To implement these methods, we used information submitted by Tataje~\cite{Tataje:2013} and Pasini~\cite{Pasini:2016} on Stack Overflow on how to output data to \lstinline|csv| using \lstinline|BufferedWriter| and \lstinline|StringBuilder|.
+
+\end{document}

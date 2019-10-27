@@ -1,0 +1,15 @@
+\documentclass[../Dissertation.tex]{subfiles}
+\begin{document}
+\subsubsection{getPercentageChanges()}
+
+Underpinning all our calculations when estimating VaR is our historical data.
+We need to compute the daily percentage changes, as seen in equation~\ref{eqn:returns} when using any VaR measure.
+The method \lstinline|getPercentageChanges()| will take a two-dimensional array of stock prices and iterate first by asset and then by day.
+Or, in other words, we use a nested loop in which we iterate through every element in a column and then move onto the next column.
+At each element we compute:
+\begin{lstlisting}[firstnumber=127,basicstyle=\fontsize{8}{10}\sffamily, escapeinside={@}{@}]
+	priceDiff[i][j] = ((multiVector[i][j]- multiVector[i][j+1])@\newline@/ multiVector[i][j+1]);
+\end{lstlisting}
+The end result is the two-dimensional array \lstinline|double[][] priceDiff| that will be one row shorter than our array of stock data.
+If we call \lstinline|getMean()| on \lstinline|priceDiff|, we will return a result very close to zero.
+\end{document}
