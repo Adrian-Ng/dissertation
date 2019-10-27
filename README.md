@@ -8,6 +8,6 @@ It's not great. I mean one third of it could be shoved into the appendix. Oh wel
 # What do I do?
 
 Click on `Dissertation.pdf` file to read it.
-Or feel free to take a look at this mess of a `.tex` corpus.
+Or feel free to take a look at all the files in `./tex`. It's a real mess.
 
 Adrian
