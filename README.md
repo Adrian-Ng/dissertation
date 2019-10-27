@@ -5,8 +5,9 @@ I wrote it in LaTeX. But I never version controlled it. This is just one giant i
 
 It's not great. I mean one third of it could be shoved into the appendix. Oh well. It got an A.
 
-# Tell me what to do
+# What do I do?
 
-Click on the `dissertation.pdf` file.
+Click on `Dissertation.pdf` file to read it.
+Or feel free to take a look at this mess of a `.tex` corpus.
 
 Adrian
